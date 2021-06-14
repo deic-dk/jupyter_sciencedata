@@ -1,5 +1,5 @@
 # This is a fork of JupyterS3 - https://github.com/uktrade/jupyters3
-# modified to use a plain WebDAV service instead of S3.
+# modified to use a plain unauthenticated/trusted WebDAV service instead of S3.
 
 import asyncio
 import base64
@@ -50,102 +50,21 @@ UNTITLED_FILE = 'Untitled'
 UNTITLED_DIRECTORY  = 'Untitled Folder'
 
 Context = namedtuple('Context', [
-    'logger', 'prefix', 'region', 's3_bucket', 's3_host', 's3_auth',
+    'logger', 
     'multipart_uploads',
 ])
 AwsCreds = namedtuple('AwsCreds', [
-    'access_key_id', 'secret_access_key', 'pre_auth_headers',
+    'access_key_id', 'secret_access_key',
 ])
-
-
-class ExpiringDict:
-
-    def __init__(self, seconds):
-        self._seconds = seconds
-        self._store = {}
-
-    def _remove_old_keys(self, now):
-        self._store = {
-            key: (expires, value)
-            for key, (expires, value) in self._store.items()
-            if expires > now
-        }
-
-    def __getitem__(self, key):
-        now = int(time.time())
-        self._remove_old_keys(now)
-        return self._store[key][1]
-
-    def __setitem__(self, key, value):
-        now = int(time.time())
-        self._remove_old_keys(now)
-        self._store[key] = (now + self._seconds, value)
-
-    def __delitem__(self, key):
-        now = int(time.time())
-        self._remove_old_keys(now)
-        del self._store[key]
-
 
 class Datetime(TraitType):
     klass = datetime.datetime
     default_value = datetime.datetime(1900, 1, 1)
 
-
-class JupyterS3Authentication(Configurable):
-
-    def get_credentials(self):
-        raise NotImplementedError()
-
-
-class JupyterS3SecretAccessKeyAuthentication(JupyterS3Authentication):
-
-    aws_access_key_id = Unicode(config=True)
-    aws_secret_access_key = Unicode(config=True)
-    pre_auth_headers = Dict()
-
-    @gen.coroutine
-    def get_credentials(self):
-        return AwsCreds(
-            access_key_id=self.aws_access_key_id,
-            secret_access_key=self.aws_secret_access_key,
-            pre_auth_headers=self.pre_auth_headers,
-        )
-
-
-class JupyterS3ECSRoleAuthentication(JupyterS3Authentication):
-
-    aws_access_key_id = Unicode()
-    aws_secret_access_key = Unicode()
-    pre_auth_headers = Dict()
-    expiration = Datetime()
-
-    @gen.coroutine
-    def get_credentials(self):
-        now = datetime.datetime.now()
-
-        if now > self.expiration:
-            request = HTTPRequest('http://169.254.170.2' + os.environ['AWS_CONTAINER_CREDENTIALS_RELATIVE_URI'], method='GET')
-            creds = json.loads((yield AsyncHTTPClient().fetch(request)).body.decode('utf-8'))
-            self.aws_access_key_id = creds['AccessKeyId']
-            self.aws_secret_access_key = creds['SecretAccessKey']
-            self.pre_auth_headers = {
-                'x-amz-security-token': creds['Token'],
-            }
-            self.expiration = datetime.datetime.strptime(creds['Expiration'], '%Y-%m-%dT%H:%M:%SZ')
-
-        return AwsCreds(
-            access_key_id=self.aws_access_key_id,
-            secret_access_key=self.aws_secret_access_key,
-            pre_auth_headers=self.pre_auth_headers,
-        )
-
-
-class JupyterS3(ContentsManager):
+class JupyterScienceData(ContentsManager):
 
     aws_s3_bucket = Unicode(config=True)
     aws_s3_host = Unicode(config=True)
-    aws_region = Unicode(config=True)
     prefix = Unicode(config=True)
 
     authentication_class = Type(JupyterS3Authentication, config=True)
@@ -166,12 +85,6 @@ class JupyterS3(ContentsManager):
     @default('write_lock')
     def _write_lock_default(self):
         return Lock()
-
-    multipart_uploads = Instance(ExpiringDict)
-
-    @default('multipart_uploads')
-    def _multipart_uploads_default(self):
-        return ExpiringDict(60 * 60 * 1)
 
     def is_hidden(self, path):
         return False
@@ -255,7 +168,6 @@ class JupyterS3(ContentsManager):
     def _context(self):
         return Context(
             logger=self.log,
-            region=self.aws_region,
             s3_bucket=self.aws_s3_bucket,
             s3_host=self.aws_s3_host,
             s3_auth=self.authentication.get_credentials,
@@ -618,16 +530,6 @@ def _rename(context, old_path, new_path):
 
     return (yield _get(context, new_path, content=False, type=None, format=None))
 
-
-@gen.coroutine
-def _copy_key(context, old_key, new_key):
-    source_bucket = context.s3_bucket
-    copy_headers = {
-        'x-amz-copy-source': f'/{source_bucket}/{old_key}',
-    }
-    yield _make_s3_request(context, 'PUT', '/' + new_key, {}, copy_headers, b'')
-
-
 @gen.coroutine
 def _delete(context, path):
     if not path:
@@ -721,10 +623,6 @@ def _copy(context, from_path, to_path):
         to_name = yield _increment_filename(context, name, to_path, insert='-Copy')
         to_path = u'{0}/{1}'.format(to_path, to_name)
 
-    from_key = _key(context, from_path)
-    to_key = _key(context, to_path)
-
-    yield _copy_key(context, from_key, to_key)
     return {
         **model,
         'name': to_name,
@@ -803,17 +701,13 @@ def _list_keys(context, key_prefix, delimeter):
 
 
 @gen.coroutine
-def _make_s3_request(context, method, path, query, api_pre_auth_headers, payload):
+def _make_s3_request(context, method, path, query, payload):
     service = 's3'
     credentials = yield context.s3_auth()
-    pre_auth_headers = {
-        **api_pre_auth_headers,
-        **credentials.pre_auth_headers,
-    }
     full_path = f'/{context.s3_bucket}{path}'
-    headers = _aws_sig_v4_headers(
-        credentials.access_key_id, credentials.secret_access_key, pre_auth_headers,
-        service, context.region, context.s3_host, method, full_path, query, payload,
+    headers = _sciencedata_headers(
+        credentials.access_key_id, credentials.secret_access_key,
+        service, context.s3_host, method, full_path, query, payload,
     )
 
     querystring = urllib.parse.urlencode(query, safe='~', quote_via=urllib.parse.quote)
@@ -835,60 +729,17 @@ def _make_s3_request(context, method, path, query, api_pre_auth_headers, payload
     return response
 
 
-def _aws_sig_v4_headers(access_key_id, secret_access_key, pre_auth_headers,
-                        service, region, host, method, path, query, payload):
+def _sciencedata_headers(access_key_id, secret_access_key,
+                        service, host, method, path, query, payload):
     algorithm = 'AWS4-HMAC-SHA256'
 
     now = datetime.datetime.utcnow()
     amzdate = now.strftime('%Y%m%dT%H%M%SZ')
     datestamp = now.strftime('%Y%m%d')
     payload_hash = hashlib.sha256(payload).hexdigest()
-    credential_scope = f'{datestamp}/{region}/{service}/aws4_request'
-
-    pre_auth_headers_lower = {
-        header_key.lower(): ' '.join(header_value.split())
-        for header_key, header_value in pre_auth_headers.items()
-    }
-    required_headers = {
-        'host': host,
-        'x-amz-content-sha256': payload_hash,
-        'x-amz-date': amzdate,
-    }
-    headers = {**pre_auth_headers_lower, **required_headers}
-    header_keys = sorted(headers.keys())
-    signed_headers = ';'.join(header_keys)
-
-    def signature():
-        def canonical_request():
-            canonical_uri = urllib.parse.quote(path, safe='/~')
-            quoted_query = sorted(
-                (urllib.parse.quote(key, safe='~'), urllib.parse.quote(value, safe='~'))
-                for key, value in query.items()
-            )
-            canonical_querystring = '&'.join(f'{key}={value}' for key, value in quoted_query)
-            canonical_headers = ''.join(f'{key}:{headers[key]}\n' for key in header_keys)
-
-            return f'{method}\n{canonical_uri}\n{canonical_querystring}\n' + \
-                   f'{canonical_headers}\n{signed_headers}\n{payload_hash}'
-
-        def sign(key, msg):
-            return hmac.new(key, msg.encode('utf-8'), hashlib.sha256).digest()
-
-        string_to_sign = f'{algorithm}\n{amzdate}\n{credential_scope}\n' + \
-                         hashlib.sha256(canonical_request().encode('utf-8')).hexdigest()
-
-        date_key = sign(('AWS4' + secret_access_key).encode('utf-8'), datestamp)
-        region_key = sign(date_key, region)
-        service_key = sign(region_key, service)
-        request_key = sign(service_key, 'aws4_request')
-        return sign(request_key, string_to_sign).hex()
 
     return {
-        **pre_auth_headers,
-        'x-amz-date': amzdate,
-        'x-amz-content-sha256': payload_hash,
-        'Authorization': f'{algorithm} Credential={access_key_id}/{credential_scope}, '
-                         f'SignedHeaders={signed_headers}, Signature=' + signature(),
+        'Authorization': f'{algorithm} Credential={access_key_id}/{credential_scope},
     }
 
 
