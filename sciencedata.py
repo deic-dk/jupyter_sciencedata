@@ -15,7 +15,6 @@ import threading
 import re
 import time
 import urllib
-import xml.etree.ElementTree as ET
 
 from tornado import gen
 from tornado.httpclient import (
@@ -42,6 +41,8 @@ from notebook.services.contents.manager import (
     ContentsManager,
 )
 
+from webdav3.client import Client
+
 DIRECTORY_SUFFIX = '/'
 NOTEBOOK_SUFFIX = '.ipynb'
 CHECKPOINT_SUFFIX = '.checkpoints'
@@ -50,12 +51,37 @@ UNTITLED_FILE = 'Untitled'
 UNTITLED_DIRECTORY  = 'Untitled Folder'
 
 Context = namedtuple('Context', [
-    'logger', 
-    'multipart_uploads',
+    'logger', 'multipart_uploads'
 ])
-AwsCreds = namedtuple('AwsCreds', [
-    'access_key_id', 'secret_access_key',
-])
+
+class ExpiringDict:
+
+    def __init__(self, seconds):
+        self._seconds = seconds
+        self._store = {}
+
+    def _remove_old_keys(self, now):
+        self._store = {
+            key: (expires, value)
+            for key, (expires, value) in self._store.items()
+            if expires > now
+        }
+
+    def __getitem__(self, key):
+        now = int(time.time())
+        self._remove_old_keys(now)
+        return self._store[key][1]
+
+    def __setitem__(self, key, value):
+        now = int(time.time())
+        self._remove_old_keys(now)
+        self._store[key] = (now + self._seconds, value)
+
+    def __delitem__(self, key):
+        now = int(time.time())
+        self._remove_old_keys(now)
+        del self._store[key]
+
 
 class Datetime(TraitType):
     klass = datetime.datetime
@@ -63,16 +89,13 @@ class Datetime(TraitType):
 
 class JupyterScienceData(ContentsManager):
 
-    aws_s3_bucket = Unicode(config=True)
-    aws_s3_host = Unicode(config=True)
-    prefix = Unicode(config=True)
-
-    authentication_class = Type(JupyterS3Authentication, config=True)
-    authentication = Instance(JupyterS3Authentication)
-
-    @default('authentication')
-    def _default_authentication(self):
-        return self.authentication_class(parent=self)
+    webdav_options = {
+     'webdav_hostname': 'sciencedata',
+     'webdav_login': '',
+     'webdav_password': '',
+     'verify': False
+    }
+    webdav_client = Client(webdav_options)
 
     # Do not use a checkpoints class: the rest of the system
     # only expects a ContentsManager
@@ -85,6 +108,12 @@ class JupyterScienceData(ContentsManager):
     @default('write_lock')
     def _write_lock_default(self):
         return Lock()
+
+    multipart_uploads = Instance(ExpiringDict)
+
+    @default('multipart_uploads')
+    def _multipart_uploads_default(self):
+        return ExpiringDict(60 * 60 * 1)
 
     def is_hidden(self, path):
         return False
@@ -127,9 +156,9 @@ class JupyterScienceData(ContentsManager):
             yield _delete(self._context(), path)
 
     @gen.coroutine
-    def update(self, model, path):
+    def rename_file(self, old_path, new_path):
         with (yield self.write_lock.acquire()):
-            return (yield _rename(self._context(), path, model['path']))
+            return (yield _rename(self._context(), old_path, new_path))
 
     @gen.coroutine
     def new_untitled(self, path='', type='', ext=''):
@@ -168,37 +197,11 @@ class JupyterScienceData(ContentsManager):
     def _context(self):
         return Context(
             logger=self.log,
-            s3_bucket=self.aws_s3_bucket,
-            s3_host=self.aws_s3_host,
-            s3_auth=self.authentication.get_credentials,
-            prefix=self.prefix,
             multipart_uploads=self.multipart_uploads,
         )
 
-
-# The documentation suggests that leading slashes in the
-# path are not present, but they are, mostly
-def _key(context, path):
-    return context.prefix + path.lstrip('/')
-
-
-def _path(context, key):
-    return '/' + key[len(context.prefix):]
-
-
-def _final_path_component(key_or_path):
-    return key_or_path.split('/')[-1]
-
-
-# The sort keys keep the UI as reasonable as possible with long running
-# actions acting on multiple objects, including if things fail in the middle
-def _copy_sort_key(key):
-    return (key.count('/'), 0 if key.endswith(DIRECTORY_SUFFIX) else 1)
-
-
-def _delete_sort_key(key):
-    return tuple(-1 * key_i for key_i in _copy_sort_key(key))
-
+def _final_path_component(path):
+    return path.split('/')[-1]
 
 # We don't save type/format to S3, so we do some educated guesswork
 # as to the types/formats of returned values.
@@ -210,7 +213,6 @@ def _type_from_path(context, path):
         'file'
     return type
 
-
 def _format_from_type_and_path(context, type, path):
     type = \
         'json' if type == 'notebook' else \
@@ -219,33 +221,28 @@ def _format_from_type_and_path(context, type, path):
         'base64'
     return type
 
-
 def _type_from_path_not_directory(path):
     type = \
         'notebook' if path.endswith(NOTEBOOK_SUFFIX) else \
         'file'
     return type
 
-
 @gen.coroutine
 def _dir_exists(context, path):
     return True if _is_root(path) else (yield _file_exists(context, path + DIRECTORY_SUFFIX))
-
 
 def _is_root(path):
     is_notebook_root = path == ''
     is_lab_root = path == '/'
     return is_notebook_root or is_lab_root
 
-
 @gen.coroutine
 def _file_exists(context, path):
 
     @gen.coroutine
     def key_exists():
-        key = _key(context, path)
         try:
-            response = yield _make_s3_request(context, 'HEAD', '/' + key, {}, {}, b'')
+            response = yield _make_sciencedata_http_request(context, 'HEAD', '/' + path, {}, {}, b'', {})
         except HTTPClientError as exception:
             if exception.response.code != 404:
                 raise HTTPServerError(exception.response.code, 'Error checking if S3 exists')
@@ -255,11 +252,9 @@ def _file_exists(context, path):
 
     return False if _is_root(path) else (yield key_exists())
 
-
 @gen.coroutine
 def _exists(context, path):
     return (yield _file_exists(context, path)) or (yield _dir_exists(context, path)) 
-
 
 @gen.coroutine
 def _get(context, path, content, type, format):
@@ -267,28 +262,23 @@ def _get(context, path, content, type, format):
     format_to_get = format if format is not None else _format_from_type_and_path(context, type_to_get, path)
     return (yield GETTERS[(type_to_get, format_to_get)](context, path, content))
 
-
 @gen.coroutine
 def _get_notebook(context, path, content):
     notebook_dict = yield _get_any(context, path, content, 'notebook', None, 'json', lambda file_bytes: json.loads(file_bytes.decode('utf-8')))
     return nbformat.from_dict(notebook_dict)
 
-
 @gen.coroutine
 def _get_file_base64(context, path, content):
     return (yield _get_any(context, path, content, 'file', 'application/octet-stream', 'base64', lambda file_bytes: base64.b64encode(file_bytes).decode('utf-8')))
-
 
 @gen.coroutine
 def _get_file_text(context, path, content):
     return (yield _get_any(context, path, content, 'file', 'text/plain', 'text', lambda file_bytes: file_bytes.decode('utf-8')))
 
-
 @gen.coroutine
 def _get_any(context, path, content, type, mimetype, format, decode):
     method = 'GET' if content else 'HEAD'
-    key = _key(context, path)
-    response = yield _make_s3_request(context, method, '/' + key, {}, {}, b'')
+    response = yield _make_sciencedata_http_request(context, method, '/' + path, {}, {}, b'', {})
     file_bytes = response.body
     last_modified_str = response.headers['Last-Modified']
     last_modified = datetime.datetime.strptime(last_modified_str, "%a, %d %b %Y %H:%M:%S GMT")
@@ -307,14 +297,7 @@ def _get_any(context, path, content, type, mimetype, format, decode):
 
 @gen.coroutine
 def _get_directory(context, path, content):
-    key = _key(context, path)
-    key_prefix = key if (key == '' or key[-1] == '/') else (key + '/')
-    keys, directories = \
-        (yield _list_immediate_child_keys_and_directories(context, key_prefix)) if content else \
-        ([], [])
-
-    all_keys = {key for (key, _) in keys}
-
+    files = webdav_client.list(path, get_info=True) if content else []
     return {
         'name': _final_path_component(path),
         'path': path,
@@ -324,26 +307,16 @@ def _get_directory(context, path, content):
         'last_modified': datetime.datetime.fromtimestamp(86400), 
         'created': datetime.datetime.fromtimestamp(86400),
         'format': 'json' if content else None,
-        'content': ([
+        'content': [
             {
-                'type': 'directory',
-                'name': _final_path_component(directory),
-                'path': _path(context, directory),
+                'type': 'directory' if file['isdir'] else _type_from_path_not_directory(file),
+                'name': file['name'],
+                'path':file['path'],
+                'last_modified': file['modified'],
             }
-            for directory in directories
-            if directory not in all_keys
-        ] + [
-            {
-                'type': _type_from_path_not_directory(key),
-                'name': _final_path_component(key),
-                'path': _path(context, key),
-                'last_modified': last_modified,
-            }
-            for (key, last_modified) in keys
-            if not key.endswith(DIRECTORY_SUFFIX)
-        ]) if content else None
+            for (file) in files
+        ] if content else None
     }
-
 
 @gen.coroutine
 def _save(context, model, path):
@@ -356,26 +329,21 @@ def _save(context, model, path):
         path,
     ))
 
-
 @gen.coroutine
 def _save_notebook(context, chunk, content, path):
     return (yield _save_any(context, chunk, json.dumps(content).encode('utf-8'), path, 'notebook', None))
-
 
 @gen.coroutine
 def _save_file_base64(context, chunk, content, path):
     return (yield _save_any(context, chunk, base64.b64decode(content.encode('utf-8')), path, 'file', 'application/octet-stream'))
 
-
 @gen.coroutine
 def _save_file_text(context, chunk, content, path):
     return (yield _save_any(context, chunk, content.encode('utf-8'), path, 'file', 'text/plain'))
 
-
 @gen.coroutine
 def _save_directory(context, chunk, content, path):
     return (yield _save_any(context, chunk, b'', path + DIRECTORY_SUFFIX, 'directory', None))
-
 
 @gen.coroutine
 def _save_any(context, chunk, content_bytes, path, type, mimetype):
@@ -384,7 +352,6 @@ def _save_any(context, chunk, content_bytes, path, type, mimetype):
         (yield _save_chunk(context, chunk, content_bytes, path, type, mimetype))
 
     return response
-
 
 @gen.coroutine
 def _save_chunk(context, chunk, content_bytes, path, type, mimetype):
@@ -401,16 +368,13 @@ def _save_chunk(context, chunk, content_bytes, path, type, mimetype):
     else:
         return _saved_model(path, type, mimetype, datetime.datetime.now())
 
-
 @gen.coroutine
 def _save_bytes(context, content_bytes, path, type, mimetype):
-    key = _key(context, path)
-    response = yield _make_s3_request(context, 'PUT', '/' + key, {}, {}, content_bytes)
+    response = yield _make_sciencedata_http_request(context, 'PUT', '/' + path, {}, {}, content_bytes, {})
 
     last_modified_str = response.headers['Date']
     last_modified = datetime.datetime.strptime(last_modified_str, "%a, %d %b %Y %H:%M:%S GMT")
     return _saved_model(path, type, mimetype, last_modified)
-
 
 def _saved_model(path, type, mimetype, last_modified):
     return {
@@ -425,7 +389,6 @@ def _saved_model(path, type, mimetype, last_modified):
         'content': None,
     }
 
-
 @gen.coroutine
 def _increment_filename(context, filename, path='', insert=''):
     basename, dot, ext = filename.partition('.')
@@ -438,10 +401,8 @@ def _increment_filename(context, filename, path='', insert=''):
             break
     return name
 
-
 def _checkpoint_path(path, checkpoint_id):
     return path + '/' + CHECKPOINT_SUFFIX + '/' + checkpoint_id
-
 
 @gen.coroutine
 def _create_checkpoint(context, path):
@@ -460,13 +421,11 @@ def _create_checkpoint(context, path):
         'last_modified': checkpoint['last_modified'],
     }
 
-
 @gen.coroutine
 def _get_model_at_checkpoint(context, type, checkpoint_id, path):
     format = _format_from_type_and_path(context, type, path)
     checkpoint_path = _checkpoint_path(path, checkpoint_id)
     return (yield GETTERS[(type, format)](context, checkpoint_path, True))
-
 
 @gen.coroutine
 def _restore_checkpoint(context, checkpoint_id, path):
@@ -474,25 +433,21 @@ def _restore_checkpoint(context, checkpoint_id, path):
     model = yield _get_model_at_checkpoint(context, type, checkpoint_id, path)
     yield _save(context, model, path)
 
-
 @gen.coroutine
 def _delete_checkpoint(context, checkpoint_id, path):
     checkpoint_path = _checkpoint_path(path, checkpoint_id)
     yield _delete(context, checkpoint_path)
 
-
 @gen.coroutine
 def _list_checkpoints(context, path):
-    key_prefix = _key(context, path + '/' + CHECKPOINT_SUFFIX + '/')
-    keys, _ = yield _list_immediate_child_keys_and_directories(context, key_prefix)
+    files = webdav_client.list(path, get_info=True)
     return [
         {
-            'id': key[(key.rfind('/' + CHECKPOINT_SUFFIX + '/') + len('/' + CHECKPOINT_SUFFIX + '/')):],
-            'last_modified': last_modified,
+            'id': file['path'][(file['path'].rfind('/' + CHECKPOINT_SUFFIX + '/') + len('/' + CHECKPOINT_SUFFIX + '/')):],
+            'last_modified': file['modifled'],
         }
-        for key, last_modified in keys
+        for file in files
     ]
-
 
 @gen.coroutine
 def _rename(context, old_path, new_path):
@@ -503,58 +458,15 @@ def _rename(context, old_path, new_path):
         raise HTTPServerError(400, "Target already exists")
 
     type = yield _type_from_path(context, old_path)
-    old_key = _key(context, old_path)
-    new_key = _key(context, new_path)
-
-    def replace_key_prefix(string):
-        return new_key + string[len(old_key):]
-
-    object_key = \
-        [] if type == 'directory' else \
-        [(old_key, new_key)]
-
-    renames = object_key + [
-        (key, replace_key_prefix(key))
-        for (key, _) in (yield _list_all_descendant_keys(context, old_key + '/'))
-    ]
-
-    # We can't really do a transaction on S3, and not sure if we can trust that on any error
-    # from DELETE, that the DELETE hasn't happened: even checking if the file is still there
-    # isn't bulletproof due to eventual consistency. So we risk duplicate files over risking
-    # deleted files
-    for (old_key, new_key) in object_key + sorted(renames, key=lambda k: _copy_sort_key(k[0])):
-        yield _copy_key(context, old_key, new_key)
-
-    for (old_key, _) in sorted(renames, key=lambda k: _delete_sort_key(k[0])) + object_key:
-        yield _delete_key(context, old_key)
-
-    return (yield _get(context, new_path, content=False, type=None, format=None))
+    response = yield _make_sciencedata_http_request(context, 'MOVE', '/' + path, {}, {}, content_bytes, {})
+    last_modified_str = response.headers['Date']
+    last_modified = datetime.datetime.strptime(last_modified_str, "%a, %d %b %Y %H:%M:%S GMT")
+    mimetype = response.headers['Content-Type']
+    return _saved_model(new_path, type, mimetype, last_modified)
 
 @gen.coroutine
 def _delete(context, path):
-    if not path:
-        raise HTTPServerError(400, "Can't delete root")
-
-    type = _type_from_path(context, path)
-    root_key = _key(context, path)
-
-    object_key = \
-        [] if type == 'directory' else \
-        [root_key]
-
-    descendant_keys = [
-        key
-        for (key, _) in (yield _list_all_descendant_keys(context, root_key + '/'))
-    ]
-
-    for key in sorted(descendant_keys, key=_delete_sort_key) + object_key:
-        yield _delete_key(context, key)
-
-
-@gen.coroutine
-def _delete_key(context, key):
-    yield _make_s3_request(context, 'DELETE', '/' + key, {}, {}, b'')
-
+    yield _make_sciencedata_http_request(context, 'DELETE', '/' + path, {}, {}, b'', {})
 
 @gen.coroutine
 def _new_untitled(context, path, type, ext):
@@ -585,7 +497,6 @@ def _new_untitled(context, path, type, ext):
     }
     return (yield _new(context, model, path))
 
-
 @gen.coroutine
 def _new(context, model, path):
     if model is None:
@@ -601,7 +512,6 @@ def _new(context, model, path):
         model['format'] = 'text'
 
     return (yield _save(context, model, path))
-
 
 @gen.coroutine
 def _copy(context, from_path, to_path):
@@ -629,95 +539,17 @@ def _copy(context, from_path, to_path):
         'path': to_path,
     }
 
-
 @gen.coroutine
-def _list_immediate_child_keys_and_directories(context, key_prefix):
-    return (yield _list_keys(context, key_prefix, '/'))
-
-
-@gen.coroutine
-def _list_all_descendant_keys(context, key_prefix):
-    return (yield _list_keys(context, key_prefix, ''))[0]
-
-
-@gen.coroutine
-def _list_keys(context, key_prefix, delimeter):
-    common_query = {
-        'max-keys': '1000',
-        'list-type': '2',
-    }
-
-    @gen.coroutine
-    def _list_first_page():
-        query = {
-            **common_query,
-            'delimiter': delimeter,
-            'prefix': key_prefix,
-        }
-        response = yield _make_s3_request(context, 'GET', '/', query, {}, b'')
-        return _parse_list_response(response)
-
-    @gen.coroutine
-    def _list_later_page(token):
-        query = {
-             **common_query,
-            'continuation-token': token,
-        }
-        response = yield _make_s3_request(context, 'GET', '/', query, {}, b'')
-        return _parse_list_response(response)
-
-    def _first_child_text(el, tag):
-        for child in el:
-            if child.tag == tag:
-                return child.text
-
-    def _parse_list_response(response):
-        namespace = '{http://s3.amazonaws.com/doc/2006-03-01/}'
-        root = ET.fromstring(response.body)
-        next_token = ''
-        keys = []
-        directories = []
-        for el in root:
-            if el.tag == f'{namespace}Contents':
-                key = _first_child_text(el, f'{namespace}Key')
-                last_modified_str = _first_child_text(el, f'{namespace}LastModified')
-                last_modified = datetime.datetime.strptime(last_modified_str, "%Y-%m-%dT%H:%M:%S.%fZ")
-                keys.append((key, last_modified))
-            if el.tag == f'{namespace}CommonPrefixes':
-                # Prefixes end in '/', which we strip off
-                directories.append(_first_child_text(el, f'{namespace}Prefix')[:-1])
-            if el.tag == f'{namespace}NextContinuationToken':
-                next_token = el.text
-
-        return (next_token, keys, directories)
-
-    token, keys, directories = yield _list_first_page()
-    while token:
-        token, keys_page, directories_page = yield _list_later_page(token)
-        keys.extend(keys_page)
-        directories.extend(directories_page)
-
-    return keys, directories
-
-
-@gen.coroutine
-def _make_s3_request(context, method, path, query, payload):
-    service = 's3'
-    credentials = yield context.s3_auth()
-    full_path = f'/{context.s3_bucket}{path}'
-    headers = _sciencedata_headers(
-        credentials.access_key_id, credentials.secret_access_key,
-        service, context.s3_host, method, full_path, query, payload,
-    )
-
+def _make_sciencedata_http_request(context, method, path, query, payload, headers):
+    all_headers = {**sciencedata_headers, **headers}
     querystring = urllib.parse.urlencode(query, safe='~', quote_via=urllib.parse.quote)
     encoded_path = urllib.parse.quote(full_path, safe='/~')
-    url = f'https://{context.s3_host}{encoded_path}' + (('?' + querystring) if querystring else '')
+    url = f'https://sciencedata{encoded_path}' + (('?' + querystring) if querystring else '')
 
     body = \
         payload if method == 'PUT' else \
         None
-    request = HTTPRequest(url, method=method, headers=headers, body=body)
+    request = HTTPRequest(url, method=method, headers=all_headers, body=body, validate_cert=False)
 
     try:
         response = (yield AsyncHTTPClient().fetch(request))
@@ -727,21 +559,6 @@ def _make_s3_request(context, method, path, query, payload):
         raise
 
     return response
-
-
-def _sciencedata_headers(access_key_id, secret_access_key,
-                        service, host, method, path, query, payload):
-    algorithm = 'AWS4-HMAC-SHA256'
-
-    now = datetime.datetime.utcnow()
-    amzdate = now.strftime('%Y%m%dT%H%M%SZ')
-    datestamp = now.strftime('%Y%m%d')
-    payload_hash = hashlib.sha256(payload).hexdigest()
-
-    return {
-        'Authorization': f'{algorithm} Credential={access_key_id}/{credential_scope},
-    }
-
 
 def _run_sync_in_new_thread(func):
     result = None
