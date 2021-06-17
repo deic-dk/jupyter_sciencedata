@@ -59,7 +59,7 @@ SCIENCEDATA_PREFIX = "/files/";
 SCIENCEDATA_HOST = "sciencedata";
 
 webdav_options = {
- 'webdav_hostname': SCIENCEDATA_HOST,
+ 'webdav_hostname': "https://" + SCIENCEDATA_HOST,
  'webdav_login': '',
  'webdav_password': '',
  'verify': False
