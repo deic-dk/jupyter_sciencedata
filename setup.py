@@ -5,7 +5,7 @@ with open('README.md', 'r') as fh:
 
 setuptools.setup(
     name='jupyter_sciencedata',
-    version='0.0.1',
+    version='0.0.2',
     author='Frederik Orellana',
     author_email='frederik@orellana.dk',
     description='Jupyter Notebook Contents Manager for ScienceData - based on jupyters3 by Michael Charemza, https://github.com/uktrade/jupyters3',
