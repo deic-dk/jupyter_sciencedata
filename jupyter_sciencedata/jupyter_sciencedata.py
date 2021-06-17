@@ -545,7 +545,7 @@ def _copy(context, from_path, to_path):
 def _make_sciencedata_http_request(context, method, path, query, payload, headers):
     all_headers = {**SCIENCEDATA_HEADERS, **headers}
     querystring = urllib.parse.urlencode(query, safe='~', quote_via=urllib.parse.quote)
-    encoded_path = urllib.parse.quote(full_path, safe='/~')
+    encoded_path = urllib.parse.quote(path, safe='/~')
     url = f'https://sciencedata{encoded_path}' + (('?' + querystring) if querystring else '')
 
     body = \
