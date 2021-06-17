@@ -54,6 +54,8 @@ Context = namedtuple('Context', [
     'logger', 'multipart_uploads'
 ])
 
+SCIENCEDATA_HEADERS = {};
+
 class ExpiringDict:
 
     def __init__(self, seconds):
@@ -541,7 +543,7 @@ def _copy(context, from_path, to_path):
 
 @gen.coroutine
 def _make_sciencedata_http_request(context, method, path, query, payload, headers):
-    all_headers = {**sciencedata_headers, **headers}
+    all_headers = {**SCIENCEDATA_HEADERS, **headers}
     querystring = urllib.parse.urlencode(query, safe='~', quote_via=urllib.parse.quote)
     encoded_path = urllib.parse.quote(full_path, safe='/~')
     url = f'https://sciencedata{encoded_path}' + (('?' + querystring) if querystring else '')
