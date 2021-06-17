@@ -304,7 +304,7 @@ def _get_any(context, path, content, type, mimetype, format, decode):
 
 @gen.coroutine
 def _get_directory(context, path, content):
-    files = webdav_client.list(SCIENCEDATA_PREFIX + path, get_info=True) if content else []
+    files = self.webdav_client.list(SCIENCEDATA_PREFIX + path, get_info=True) if content else []
     return {
         'name': _final_path_component(path),
         'path': path,
@@ -447,7 +447,7 @@ def _delete_checkpoint(context, checkpoint_id, path):
 
 @gen.coroutine
 def _list_checkpoints(context, path):
-    files = webdav_client.list(SCIENCEDATA_PREFIX + path, get_info=True)
+    files = self.webdav_client.list(SCIENCEDATA_PREFIX + path, get_info=True)
     return [
         {
             'id': file['path'][(file['path'].rfind('/' + CHECKPOINT_SUFFIX + '/') + len('/' + CHECKPOINT_SUFFIX + '/')):],
@@ -466,7 +466,7 @@ def _rename(context, old_path, new_path):
 
     type = yield _type_from_path(context, old_path)
     #response = yield _make_sciencedata_http_request(context, 'MOVE', path, {}, content_bytes, {})
-    response = yield webdav_client.move(remote_path_from=SCIENCEDATA_PREFIX + path, remote_path_to=SCIENCEDATA_PREFIX + new_path)
+    response = yield self.webdav_client.move(remote_path_from=SCIENCEDATA_PREFIX + path, remote_path_to=SCIENCEDATA_PREFIX + new_path)
     last_modified_str = response.headers['Date']
     last_modified = datetime.datetime.strptime(last_modified_str, "%a, %d %b %Y %H:%M:%S GMT")
     mimetype = response.headers['Content-Type']
