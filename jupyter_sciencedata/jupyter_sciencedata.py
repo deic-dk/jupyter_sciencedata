@@ -51,7 +51,7 @@ UNTITLED_FILE = 'Untitled'
 UNTITLED_DIRECTORY  = 'Untitled Folder'
 
 Context = namedtuple('Context', [
-    'logger', 'multipart_uploads'
+    'logger', 'multipart_uploads', 'sciencedata_headers', 'sciencedata_prefix'
 ])
 
 class ExpiringDict:
@@ -89,8 +89,8 @@ class Datetime(TraitType):
 
 class JupyterScienceData(ContentsManager):
 
-    SCIENCEDATA_HEADERS = {};
-    SCIENCEDATA_PREFIX = {};
+    sciencedata_headers = {};
+    sciencedata_prefix = {};
 
     webdav_options = {
      'webdav_hostname': 'sciencedata',
@@ -201,6 +201,8 @@ class JupyterScienceData(ContentsManager):
         return Context(
             logger=self.log,
             multipart_uploads=self.multipart_uploads,
+            sciencedata_headers=self.sciencedata_headers,
+            sciencedata_prefix=self.sciencedata_prefix,
         )
 
 def _final_path_component(path):
@@ -300,7 +302,7 @@ def _get_any(context, path, content, type, mimetype, format, decode):
 
 @gen.coroutine
 def _get_directory(context, path, content):
-    files = webdav_client.list(SCIENCEDATA_PREFIX+'/'+path, get_info=True) if content else []
+    files = webdav_client.list(context.sciencedata_prefix+'/'+path, get_info=True) if content else []
     return {
         'name': _final_path_component(path),
         'path': path,
@@ -443,7 +445,7 @@ def _delete_checkpoint(context, checkpoint_id, path):
 
 @gen.coroutine
 def _list_checkpoints(context, path):
-    files = webdav_client.list(SCIENCEDATA_PREFIX+'/'+path, get_info=True)
+    files = webdav_client.list(context.sciencedata_prefix+'/'+path, get_info=True)
     return [
         {
             'id': file['path'][(file['path'].rfind('/' + CHECKPOINT_SUFFIX + '/') + len('/' + CHECKPOINT_SUFFIX + '/')):],
@@ -544,9 +546,9 @@ def _copy(context, from_path, to_path):
 
 @gen.coroutine
 def _make_sciencedata_http_request(context, method, path, query, payload, headers):
-    all_headers = {**SCIENCEDATA_HEADERS, **headers}
+    all_headers = {**context.sciencedata_headers, **headers}
     querystring = urllib.parse.urlencode(query, safe='~', quote_via=urllib.parse.quote)
-    encoded_path = urllib.parse.quote(SCIENCEDATA_PREFIX+'/'+path, safe='/~')
+    encoded_path = urllib.parse.quote(context.sciencedata_prefix+'/'+path, safe='/~')
     url = f'https://sciencedata{encoded_path}' + (('?' + querystring) if querystring else '')
 
     body = \
