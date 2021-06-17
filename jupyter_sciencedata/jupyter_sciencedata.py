@@ -302,7 +302,7 @@ def _get_any(context, path, content, type, mimetype, format, decode):
 
 @gen.coroutine
 def _get_directory(context, path, content):
-    files = webdav_client.list(path, get_info=True) if content else []
+    files = webdav_client.list(context.sciencedata_prefix+'/'+path, get_info=True) if content else []
     return {
         'name': _final_path_component(path),
         'path': path,
@@ -546,7 +546,7 @@ def _copy(context, from_path, to_path):
 
 @gen.coroutine
 def _make_sciencedata_http_request(context, method, path, query, payload, headers):
-    all_headers = {**context.sciencedata_headers, **headers}
+    all_headers = {**headers}
     querystring = urllib.parse.urlencode(query, safe='~', quote_via=urllib.parse.quote)
     encoded_path = urllib.parse.quote(context.sciencedata_prefix+'/'+path, safe='/~')
     url = f'https://sciencedata{encoded_path}' + (('?' + querystring) if querystring else '')
