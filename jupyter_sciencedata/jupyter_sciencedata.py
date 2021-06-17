@@ -90,7 +90,7 @@ class Datetime(TraitType):
 class JupyterScienceData(ContentsManager):
 
     sciencedata_headers = {};
-    sciencedata_prefix = {};
+    sciencedata_prefix = 'files';
 
     webdav_options = {
      'webdav_hostname': 'sciencedata',
