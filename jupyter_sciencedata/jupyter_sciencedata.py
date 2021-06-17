@@ -32,7 +32,6 @@ from traitlets import (
     Instance,
     TraitType,
     Type,
-    HasTraits,
     default,
 )
 
@@ -88,7 +87,7 @@ class Datetime(TraitType):
     klass = datetime.datetime
     default_value = datetime.datetime(1900, 1, 1)
 
-class JupyterScienceData(ContentsManager, HasTraits):
+class JupyterScienceData(ContentsManager):
 
     webdav_options = {
      'webdav_hostname': 'sciencedata',
