@@ -54,9 +54,6 @@ Context = namedtuple('Context', [
     'logger', 'multipart_uploads'
 ])
 
-SCIENCEDATA_HEADERS = {};
-SCIENCEDATA_PREFIX = {};
-
 class ExpiringDict:
 
     def __init__(self, seconds):
@@ -91,6 +88,9 @@ class Datetime(TraitType):
     default_value = datetime.datetime(1900, 1, 1)
 
 class JupyterScienceData(ContentsManager):
+
+    SCIENCEDATA_HEADERS = {};
+    SCIENCEDATA_PREFIX = {};
 
     webdav_options = {
      'webdav_hostname': 'sciencedata',
