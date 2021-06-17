@@ -54,12 +54,21 @@ Context = namedtuple('Context', [
     'logger', 'multipart_uploads'
 ])
 
+SCIENCEDATA_HEADERS = {};
+SCIENCEDATA_PREFIX = "/files/";
+SCIENCEDATA_HOST = "sciencedata";
+
+webdav_options = {
+ 'webdav_hostname': SCIENCEDATA_HOST,
+ 'webdav_login': '',
+ 'webdav_password': '',
+ 'verify': False
+}
+webdav_client = Client(webdav_options)
+
 # As far as I can see from
 # https://github.com/ezhov-evgeny/webdav-client-python-3/blob/871ea5f9b862553465551dd79dd5b6b298e3ff17/webdav3/client.py
 # there's no way of setting headers with webdav-client, so not much point in setting some for non-webdav methods.
-
-SCIENCEDATA_HEADERS = {};
-SCIENCEDATA_PREFIX = "/files/";
 
 class ExpiringDict:
 
@@ -95,14 +104,6 @@ class Datetime(TraitType):
     default_value = datetime.datetime(1900, 1, 1)
 
 class JupyterScienceData(ContentsManager):
-
-    webdav_options = {
-     'webdav_hostname': 'sciencedata',
-     'webdav_login': '',
-     'webdav_password': '',
-     'verify': False
-    }
-    webdav_client = Client(webdav_options)
 
     # Do not use a checkpoints class: the rest of the system
     # only expects a ContentsManager
@@ -304,7 +305,7 @@ def _get_any(context, path, content, type, mimetype, format, decode):
 
 @gen.coroutine
 def _get_directory(context, path, content):
-    files = self.webdav_client.list(SCIENCEDATA_PREFIX + path, get_info=True) if content else []
+    files = webdav_client.list(SCIENCEDATA_PREFIX + path, get_info=True) if content else []
     return {
         'name': _final_path_component(path),
         'path': path,
@@ -447,7 +448,7 @@ def _delete_checkpoint(context, checkpoint_id, path):
 
 @gen.coroutine
 def _list_checkpoints(context, path):
-    files = self.webdav_client.list(SCIENCEDATA_PREFIX + path, get_info=True)
+    files = webdav_client.list(SCIENCEDATA_PREFIX + path, get_info=True)
     return [
         {
             'id': file['path'][(file['path'].rfind('/' + CHECKPOINT_SUFFIX + '/') + len('/' + CHECKPOINT_SUFFIX + '/')):],
@@ -466,7 +467,7 @@ def _rename(context, old_path, new_path):
 
     type = yield _type_from_path(context, old_path)
     #response = yield _make_sciencedata_http_request(context, 'MOVE', path, {}, content_bytes, {})
-    response = yield self.webdav_client.move(remote_path_from=SCIENCEDATA_PREFIX + path, remote_path_to=SCIENCEDATA_PREFIX + new_path)
+    response = yield webdav_client.move(remote_path_from=SCIENCEDATA_PREFIX + path, remote_path_to=SCIENCEDATA_PREFIX + new_path)
     last_modified_str = response.headers['Date']
     last_modified = datetime.datetime.strptime(last_modified_str, "%a, %d %b %Y %H:%M:%S GMT")
     mimetype = response.headers['Content-Type']
@@ -552,7 +553,7 @@ def _make_sciencedata_http_request(context, method, path, query, payload, header
     all_headers = {**SCIENCEDATA_HEADERS, **headers}
     querystring = urllib.parse.urlencode(query, safe='~', quote_via=urllib.parse.quote)
     encoded_path = urllib.parse.quote(SCIENCEDATA_PREFIX+path, safe='/~')
-    url = f'https://sciencedata{encoded_path}' + (('?' + querystring) if querystring else '')
+    url = f'https://{SCIENCEDATA_HOST}{encoded_path}' + (('?' + querystring) if querystring else '')
 
     body = \
         payload if method == 'PUT' else \
