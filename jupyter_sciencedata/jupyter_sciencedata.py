@@ -32,6 +32,7 @@ from traitlets import (
     Instance,
     TraitType,
     Type,
+    HasTraits,
     default,
 )
 
