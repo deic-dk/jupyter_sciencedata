@@ -87,7 +87,7 @@ class Datetime(TraitType):
     klass = datetime.datetime
     default_value = datetime.datetime(1900, 1, 1)
 
-class JupyterScienceData(ContentsManager):
+class JupyterScienceData(ContentsManager, HasTraits):
 
     webdav_options = {
      'webdav_hostname': 'sciencedata',
