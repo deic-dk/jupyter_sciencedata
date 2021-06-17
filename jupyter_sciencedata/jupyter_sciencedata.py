@@ -55,6 +55,7 @@ Context = namedtuple('Context', [
 ])
 
 SCIENCEDATA_HEADERS = {};
+SCIENCEDATA_PREFIX = {};
 
 class ExpiringDict:
 
@@ -299,7 +300,7 @@ def _get_any(context, path, content, type, mimetype, format, decode):
 
 @gen.coroutine
 def _get_directory(context, path, content):
-    files = webdav_client.list(path, get_info=True) if content else []
+    files = webdav_client.list(SCIENCEDATA_PREFIX+'/'+path, get_info=True) if content else []
     return {
         'name': _final_path_component(path),
         'path': path,
@@ -442,7 +443,7 @@ def _delete_checkpoint(context, checkpoint_id, path):
 
 @gen.coroutine
 def _list_checkpoints(context, path):
-    files = webdav_client.list(path, get_info=True)
+    files = webdav_client.list(SCIENCEDATA_PREFIX+'/'+path, get_info=True)
     return [
         {
             'id': file['path'][(file['path'].rfind('/' + CHECKPOINT_SUFFIX + '/') + len('/' + CHECKPOINT_SUFFIX + '/')):],
@@ -545,7 +546,7 @@ def _copy(context, from_path, to_path):
 def _make_sciencedata_http_request(context, method, path, query, payload, headers):
     all_headers = {**SCIENCEDATA_HEADERS, **headers}
     querystring = urllib.parse.urlencode(query, safe='~', quote_via=urllib.parse.quote)
-    encoded_path = urllib.parse.quote(path, safe='/~')
+    encoded_path = urllib.parse.quote(SCIENCEDATA_PREFIX+'/'+path, safe='/~')
     url = f'https://sciencedata{encoded_path}' + (('?' + querystring) if querystring else '')
 
     body = \
