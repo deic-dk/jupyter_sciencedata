@@ -5,7 +5,7 @@ Jupyter Notebook Contents Manager for ScienceData, https://sciencedata.dk/ - bas
 ## Installation
 
 ```
-pip install jupyter_sciencedata
+pip install jupyter_sciencedata/
 ```
 
 ## Configuration
