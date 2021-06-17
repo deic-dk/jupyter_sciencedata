@@ -59,7 +59,7 @@ Context = namedtuple('Context', [
 # there's no way of setting headers with webdav-client, so not much point in setting some for non-webdav methods.
 
 SCIENCEDATA_HEADERS = {};
-SCIENCEDATA_PREFIX = "files/";
+SCIENCEDATA_PREFIX = "/files/";
 
 class ExpiringDict:
 
@@ -249,7 +249,7 @@ def _file_exists(context, path):
     @gen.coroutine
     def key_exists():
         try:
-            response = yield _make_sciencedata_http_request(context, 'HEAD', '/' + path, {}, b'', {})
+            response = yield _make_sciencedata_http_request(context, 'HEAD', path, {}, b'', {})
         except HTTPClientError as exception:
             if exception.response.code != 404:
                 raise HTTPServerError(exception.response.code, 'Error checking if S3 exists')
@@ -285,7 +285,7 @@ def _get_file_text(context, path, content):
 @gen.coroutine
 def _get_any(context, path, content, type, mimetype, format, decode):
     method = 'GET' if content else 'HEAD'
-    response = yield _make_sciencedata_http_request(context, method, '/' + path, {}, b'', {})
+    response = yield _make_sciencedata_http_request(context, method, path, {}, b'', {})
     file_bytes = response.body
     last_modified_str = response.headers['Last-Modified']
     last_modified = datetime.datetime.strptime(last_modified_str, "%a, %d %b %Y %H:%M:%S GMT")
@@ -304,7 +304,7 @@ def _get_any(context, path, content, type, mimetype, format, decode):
 
 @gen.coroutine
 def _get_directory(context, path, content):
-    files = webdav_client.list(path, get_info=True) if content else []
+    files = webdav_client.list(SCIENCEDATA_PREFIX + path, get_info=True) if content else []
     return {
         'name': _final_path_component(path),
         'path': path,
@@ -377,7 +377,7 @@ def _save_chunk(context, chunk, content_bytes, path, type, mimetype):
 
 @gen.coroutine
 def _save_bytes(context, content_bytes, path, type, mimetype):
-    response = yield _make_sciencedata_http_request(context, 'PUT', '/' + path, {}, content_bytes, {})
+    response = yield _make_sciencedata_http_request(context, 'PUT', path, {}, content_bytes, {})
 
     last_modified_str = response.headers['Date']
     last_modified = datetime.datetime.strptime(last_modified_str, "%a, %d %b %Y %H:%M:%S GMT")
@@ -447,7 +447,7 @@ def _delete_checkpoint(context, checkpoint_id, path):
 
 @gen.coroutine
 def _list_checkpoints(context, path):
-    files = webdav_client.list(path, get_info=True)
+    files = webdav_client.list(SCIENCEDATA_PREFIX + path, get_info=True)
     return [
         {
             'id': file['path'][(file['path'].rfind('/' + CHECKPOINT_SUFFIX + '/') + len('/' + CHECKPOINT_SUFFIX + '/')):],
@@ -465,7 +465,8 @@ def _rename(context, old_path, new_path):
         raise HTTPServerError(400, "Target already exists")
 
     type = yield _type_from_path(context, old_path)
-    response = yield _make_sciencedata_http_request(context, 'MOVE', '/' + path, {}, content_bytes, {})
+    #response = yield _make_sciencedata_http_request(context, 'MOVE', path, {}, content_bytes, {})
+    response = yield webdav_client.move(remote_path_from=SCIENCEDATA_PREFIX + path, remote_path_to=SCIENCEDATA_PREFIX + new_path)
     last_modified_str = response.headers['Date']
     last_modified = datetime.datetime.strptime(last_modified_str, "%a, %d %b %Y %H:%M:%S GMT")
     mimetype = response.headers['Content-Type']
@@ -473,7 +474,7 @@ def _rename(context, old_path, new_path):
 
 @gen.coroutine
 def _delete(context, path):
-    yield _make_sciencedata_http_request(context, 'DELETE', '/' + path, {}, b'', {})
+    yield _make_sciencedata_http_request(context, 'DELETE', path, {}, b'', {})
 
 @gen.coroutine
 def _new_untitled(context, path, type, ext):
@@ -550,7 +551,7 @@ def _copy(context, from_path, to_path):
 def _make_sciencedata_http_request(context, method, path, query, payload, headers):
     all_headers = {**SCIENCEDATA_HEADERS, **headers}
     querystring = urllib.parse.urlencode(query, safe='~', quote_via=urllib.parse.quote)
-    encoded_path = urllib.parse.quote(path, safe='/~')
+    encoded_path = urllib.parse.quote(SCIENCEDATA_PREFIX+path, safe='/~')
     url = f'https://sciencedata{encoded_path}' + (('?' + querystring) if querystring else '')
 
     body = \
