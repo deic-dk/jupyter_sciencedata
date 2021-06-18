@@ -396,8 +396,7 @@ def _save_chunk(context, chunk, content_bytes, path, type, mimetype):
 
 @gen.coroutine
 def _save_bytes(context, content_bytes, path, type, mimetype):
-    #response = yield _make_sciencedata_http_request(context, 'PUT', path, {}, content_bytes, {})
-    response = IOLoop.current().run_sync(_make_sciencedata_http_request(context, 'PUT', path, {}, content_bytes, {}))
+    response = yield _make_sciencedata_http_request(context, 'PUT', path, {}, content_bytes, {})
 
     last_modified_str = response.headers['Date']
     last_modified = datetime.datetime.strptime(last_modified_str, "%a, %d %b %Y %H:%M:%S GMT")
@@ -583,7 +582,8 @@ def _make_sciencedata_http_request(context, method, path, query, payload, header
 
     try:
         context.logger.warning('Running HTTP request '+method+' on '+url)
-        response = (yield AsyncHTTPClient().fetch(request))
+        #response = (yield AsyncHTTPClient().fetch(request))
+        response = gen.Task(AsyncHTTPClient().fetch, request)
     except HTTPClientError as exception:
         if exception.response.code != 404:
             context.logger.warning(exception.response.body)
