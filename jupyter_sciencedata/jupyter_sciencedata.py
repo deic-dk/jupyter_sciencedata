@@ -396,7 +396,8 @@ def _save_chunk(context, chunk, content_bytes, path, type, mimetype):
 
 @gen.coroutine
 def _save_bytes(context, content_bytes, path, type, mimetype):
-    response = yield _make_sciencedata_http_request(context, 'PUT', path, {}, content_bytes, {})
+    #response = yield _make_sciencedata_http_request(context, 'PUT', path, {}, content_bytes, {})
+    response = IOLoop.current().run_sync(_make_sciencedata_http_request(context, 'PUT', path, {}, content_bytes, {}))
 
     last_modified_str = response.headers['Date']
     last_modified = datetime.datetime.strptime(last_modified_str, "%a, %d %b %Y %H:%M:%S GMT")
