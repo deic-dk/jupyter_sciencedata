@@ -21,7 +21,7 @@ from tornado.httpclient import (
     AsyncHTTPClient,
     HTTPError as HTTPClientError,
     HTTPRequest,
-    TornadoHTTPRequest,
+    TornadoDataRequest,
 )
 from tornado.ioloop import IOLoop
 from tornado.locks import Lock
@@ -579,7 +579,8 @@ def _make_sciencedata_http_request(context, method, path, query, payload, header
     body = \
         payload if method == 'PUT' else \
         None
-    request = TornadoHTTPRequest(url, method=method, headers=all_headers, body=body, validate_cert=False)
+    request = TornadoDataRequest(url, method=method, headers=all_headers, body=body, validate_cert=False) if method == 'PUT' else \
+    HTTPRequest(url, method=method, headers=all_headers, body=body, validate_cert=False)
 
     try:
         context.logger.warning('Running HTTP request '+method+' on '+url)
