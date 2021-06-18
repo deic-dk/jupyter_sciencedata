@@ -19,6 +19,7 @@ import urllib
 from tornado import gen
 from tornado.httpclient import (
     AsyncHTTPClient,
+    HTTPClient,
     HTTPError as HTTPClientError,
     HTTPRequest,
 )
