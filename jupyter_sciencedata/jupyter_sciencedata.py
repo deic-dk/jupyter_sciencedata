@@ -241,7 +241,6 @@ def _is_root(path):
 
 @gen.coroutine
 def _dir_exists(context, path):
-    return True if _is_root(path) else (yield get_etag(context, path)=='')
     @gen.coroutine
     def get_etag():
         try:
@@ -252,9 +251,10 @@ def _dir_exists(context, path):
             etag = 'notfound'
         return etag
 
+    return True if _is_root(path) else (yield get_etag(context, path)=='')
+
 @gen.coroutine
 def _file_exists(context, path):
-    return True if _is_root(path) else (yield get_etag(context, path)!='')
     @gen.coroutine
     def get_etag():
         try:
@@ -264,6 +264,8 @@ def _file_exists(context, path):
                 raise HTTPServerError(exception.response.code, 'Error checking if file exists')
             etag = ''
         return etag
+
+    return True if _is_root(path) else (yield get_etag(context, path)!='')
 
 @gen.coroutine
 def _get_etag(context, path):
