@@ -251,7 +251,7 @@ def _dir_exists(context, path):
             etag = 'notfound'
         return etag
 
-    return True if _is_root(path) else (yield get_etag()=='')
+    return True if _is_root(path) else (True if (yield get_etag())=='' else False)
 
 @gen.coroutine
 def _file_exists(context, path):
@@ -265,7 +265,7 @@ def _file_exists(context, path):
             etag = ''
         return etag
 
-    return True if _is_root(path) else (yield get_etag()!='')
+    return True if _is_root(path) else (True if (yield get_etag(c))!='' else False)
 
 @gen.coroutine
 def _get_etag(context, path):
