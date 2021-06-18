@@ -581,7 +581,7 @@ def _make_sciencedata_http_request(context, method, path, query, payload, header
     request = HTTPRequest(url, method=method, headers=all_headers, body=body, validate_cert=False)
 
     try:
-        response = (yield AsyncHTTPClient().fetch(request))
+        response = (HTTPClient().fetch(request))
     except HTTPClientError as exception:
         if exception.response.code != 404:
             context.logger.warning(exception.response.body)
