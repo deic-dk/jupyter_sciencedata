@@ -585,7 +585,7 @@ def _make_sciencedata_http_request(context, method, path, query, payload, header
     except HTTPClientError as exception:
         if exception.response.code != 404:
             context.logger.warning(exception.response.body)
-        raise
+        raise HTTPServerError(exception.response.code, 'Error accessing '+url)
 
     return response
 
