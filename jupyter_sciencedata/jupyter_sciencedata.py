@@ -317,7 +317,7 @@ def _get_directory(context, path, content):
         'format': 'json' if content else None,
         'content': [
             {
-                'type': 'directory' if file['isdir'] else _type_from_path_not_directory(file),
+                'type': 'directory' if file['isdir'] else _type_from_path_not_directory(file['path']),
                 'name': file['name'],
                 'path':file['path'],
                 'last_modified': file['modified'],
