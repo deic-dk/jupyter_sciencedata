@@ -224,7 +224,7 @@ def _format_from_type_and_path(context, type, path):
     type = \
         'json' if type == 'notebook' else \
         'json' if type == 'directory' else \
-        'text' if mimetypes.guess_type(path)[0] == 'text/plain' else \
+        'text' if (mimetypes.guess_type(path)[0] == 'text/plain' or mimetypes.guess_type(path)[0] == 'text/markdown') else \
         'base64'
     return type
 
@@ -470,7 +470,7 @@ def _list_checkpoints(context, path):
     return [
         {
             'id': file['path'][(file['path'].rfind('/' + CHECKPOINT_SUFFIX + '/') + len('/' + CHECKPOINT_SUFFIX + '/')):],
-            'last_modified': file['modifled'],
+            'last_modified': file['modified'],
         }
         for file in files
     ]
