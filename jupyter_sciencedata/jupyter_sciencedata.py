@@ -19,7 +19,6 @@ import urllib
 from tornado import gen
 from tornado.httpclient import (
     AsyncHTTPClient,
-    HTTPClient,
     HTTPError as HTTPClientError,
     HTTPRequest,
 )
@@ -582,7 +581,7 @@ def _make_sciencedata_http_request(context, method, path, query, payload, header
     request = HTTPRequest(url, method=method, headers=all_headers, body=body, validate_cert=False)
 
     try:
-        response = (HTTPClient().fetch(request))
+        response = (yield AsyncHTTPClient().fetch(request))
     except HTTPClientError as exception:
         if exception.response.code != 404:
             context.logger.warning(exception.response.body)
