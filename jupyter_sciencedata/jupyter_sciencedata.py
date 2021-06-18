@@ -558,7 +558,7 @@ def _make_sciencedata_http_request(context, method, path, query, payload, header
     body = \
         payload if method == 'PUT' else \
         None
-    request = HTTPRequest(url, method=method, headers=all_headers, body=body, validate_cert=False)
+    request = HTTPRequest(url, method=method, headers=all_headers, body=body, validate_cert=False, assert_hostname=False)
 
     try:
         response = (yield AsyncHTTPClient().fetch(request))
