@@ -43,7 +43,6 @@ from notebook.services.contents.manager import (
 
 from webdav3.client import Client
 
-DIRECTORY_SUFFIX = '/'
 NOTEBOOK_SUFFIX = '.ipynb'
 CHECKPOINT_SUFFIX = '.checkpoints'
 UNTITLED_NOTEBOOK = 'Untitled'
@@ -235,30 +234,51 @@ def _type_from_path_not_directory(path):
         'file'
     return type
 
-@gen.coroutine
-def _dir_exists(context, path):
-    return True if _is_root(path) else (yield _file_exists(context, path + DIRECTORY_SUFFIX))
-
 def _is_root(path):
     is_notebook_root = path == ''
     is_lab_root = path == '/'
     return is_notebook_root or is_lab_root
 
 @gen.coroutine
-def _file_exists(context, path):
-
+def _dir_exists(context, path):
+    return True if _is_root(path) else (yield _file_exists(context, path)=='')
     @gen.coroutine
-    def key_exists():
+    def get_etag():
         try:
-            response = yield _make_sciencedata_http_request(context, 'HEAD', path, {}, b'', {})
+            etag = _get_etag(context, path)
         except HTTPClientError as exception:
             if exception.response.code != 404:
-                raise HTTPServerError(exception.response.code, 'Error checking if S3 exists')
-            response = exception.response
+                raise HTTPServerError(exception.response.code, 'Error checking if file exists')
+            etag = 'notfound'
+        return etag
 
-        return response.code == 200
+    return (yield (get_etag()==''))
 
-    return False if _is_root(path) else (yield key_exists())
+@gen.coroutine
+def _file_exists(context, path):
+    return True if _is_root(path) else (yield _file_exists(context, path)=='')
+    @gen.coroutine
+    def get_etag():
+        try:
+            etag = _get_etag(context, path)
+        except HTTPClientError as exception:
+            if exception.response.code != 404:
+                raise HTTPServerError(exception.response.code, 'Error checking if file exists')
+            etag = ''
+        return etag
+
+    return (yield (get_etag()!=''))
+
+@gen.coroutine
+def _get_etag(context, path):
+
+    @gen.coroutine
+    def get_etag():
+        response = yield _make_sciencedata_http_request(context, 'HEAD', path, {}, b'', {})
+        etag = response.headers['ETag'] if ('ETag' in response.headers) else ''
+        return etag
+
+    return '' if _is_root(path) else (yield get_etag())
 
 @gen.coroutine
 def _exists(context, path):
@@ -351,7 +371,7 @@ def _save_file_text(context, chunk, content, path):
 
 @gen.coroutine
 def _save_directory(context, chunk, content, path):
-    return (yield _save_any(context, chunk, b'', path + DIRECTORY_SUFFIX, 'directory', None))
+    return (yield _save_any(context, chunk, b'', path + '/', 'directory', None))
 
 @gen.coroutine
 def _save_any(context, chunk, content_bytes, path, type, mimetype):
@@ -470,7 +490,9 @@ def _rename(context, old_path, new_path):
     response = yield webdav_client.move(remote_path_from=path, remote_path_to=new_path)
     last_modified_str = response.headers['Date']
     last_modified = datetime.datetime.strptime(last_modified_str, "%a, %d %b %Y %H:%M:%S GMT")
-    mimetype = response.headers['Content-Type']
+    mimestring = response.headers['Content-Type']
+    mimesplit = mimestring.split(";", 1)
+    mimetype = mimesplit[0]
     return _saved_model(new_path, type, mimetype, last_modified)
 
 @gen.coroutine
