@@ -268,6 +268,7 @@ def _file_exists(context, path):
     def get_etag():
         try:
             etag = _get_etag(context, path)
+            context.logger.warning('ETag: '+etag)
         except HTTPClientError as exception:
             if exception.response.code != 404:
                 raise HTTPServerError(exception.response.code, 'Error checking if file exists')
