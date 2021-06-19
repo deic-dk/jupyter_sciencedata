@@ -268,14 +268,13 @@ def _file_exists(context, path):
     def get_etag():
         try:
             etag = _get_etag(context, path)
-            context.logger.warning('ETag: '+etag)
         except HTTPClientError as exception:
             if exception.response.code != 404:
                 raise HTTPServerError(exception.response.code, 'Error checking if file exists')
             etag = ''
         return etag
 
-    return True if _is_root(path) else (True if (yield get_etag())!='' else False)
+    return False if _is_root(path) else (True if (yield get_etag())!='' else False)
 
 @gen.coroutine
 def _get_etag(context, path):
@@ -284,6 +283,7 @@ def _get_etag(context, path):
     def get_etag():
         response = yield _make_sciencedata_http_request(context, 'HEAD', path, {}, b'', {})
         etag = response.headers['ETag'] if ('ETag' in response.headers) else ''
+        context.logger.warning('ETag: '+etag)
         return etag
 
     return '' if _is_root(path) else (yield get_etag())
