@@ -286,7 +286,7 @@ def _get_etag(context, path):
         context.logger.warning('ETag: '+etag)
         return etag
 
-    return '' if _is_root(path) else (yield get_etag())
+    return ('' if _is_root(path) else (yield get_etag()))
 
 @gen.coroutine
 def _exists(context, path):
