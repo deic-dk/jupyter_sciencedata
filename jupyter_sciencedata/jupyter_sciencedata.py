@@ -160,15 +160,21 @@ class JupyterScienceData(ContentsManager):
 
         return _run_sync_in_new_thread(save_async)
 
-    @gen.coroutine
     def delete_file(self, path):
-        with (yield self.write_lock.acquire()):
-            yield _delete(self._context(), path)
+        @gen.coroutine
+        def delete_async():
+            with (yield self.write_lock.acquire()):
+                return (yield _delete(self._context(), path))
 
-    @gen.coroutine
+        return _run_sync_in_new_thread(delete_async)
+
     def rename_file(self, old_path, new_path):
-        with (yield self.write_lock.acquire()):
-            return (yield _rename(self._context(), old_path, new_path))
+        @gen.coroutine
+        def rename_async():
+            with (yield self.write_lock.acquire()):
+                return (yield _rename(self._context(), old_path, new_path))
+
+        return _run_sync_in_new_thread(rename_async)
 
     @gen.coroutine
     def new_untitled(self, path='', type='', ext=''):
