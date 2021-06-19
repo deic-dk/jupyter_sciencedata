@@ -274,7 +274,7 @@ def _file_exists(context, path):
             etag = ''
         return etag
 
-    return (False if _is_root(path) else (True if (yield get_file_etag())!='' else False))
+    return False if _is_root(path) else (yield get_file_etag())
 
 @gen.coroutine
 def _get_etag(context, path):
