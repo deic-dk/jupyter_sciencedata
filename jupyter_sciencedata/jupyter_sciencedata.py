@@ -152,10 +152,13 @@ class JupyterScienceData(ContentsManager):
 
         return _run_sync_in_new_thread(get_async)
 
-    @gen.coroutine
     def save(self, model, path):
-        with (yield self.write_lock.acquire()):
-            return (yield _save(self._context(), model, path))
+        @gen.coroutine
+        def save_async():
+            with (yield self.write_lock.acquire()):
+                return (yield _save(self._context(), model, path))
+
+        return _run_sync_in_new_thread(save_async)
 
     @gen.coroutine
     def delete(self, path):
@@ -583,7 +586,7 @@ def _make_sciencedata_http_request(context, method, path, query, payload, header
     try:
         context.logger.warning('Running HTTP request '+method+' on '+url)
         response = (yield AsyncHTTPClient().fetch(request))
-        tornado.ioloop.IOLoop.current().start()
+        #IOLoop.current().start()
     except HTTPClientError as exception:
         if exception.response.code != 404:
             context.logger.warning(exception.response.body)
