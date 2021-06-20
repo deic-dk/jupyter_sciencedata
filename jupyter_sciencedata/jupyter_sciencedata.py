@@ -488,7 +488,7 @@ def _rename(context, old_path, new_path):
 
     type = yield _type_from_path(context, old_path)
     #response = yield _make_sciencedata_http_request(context, 'MOVE', path, {}, content_bytes, {})
-    response = yield webdav_client.move(remote_path_from=path, remote_path_to=new_path)
+    response = yield webdav_client.move(remote_path_from=old_path, remote_path_to=new_path)
     last_modified_str = response.headers['Date']
     last_modified = datetime.datetime.strptime(last_modified_str, "%a, %d %b %Y %H:%M:%S GMT")
     mimestring = response.headers['Content-Type']
