@@ -285,7 +285,7 @@ def _get_etag(context, path):
         context.logger.warning('ETag: '+etag)
         return etag
 
-    return (yield _get_etag_async())
+    return _run_sync_in_new_thread(_get_etag_async)
 
 @gen.coroutine
 def _exists(context, path):
