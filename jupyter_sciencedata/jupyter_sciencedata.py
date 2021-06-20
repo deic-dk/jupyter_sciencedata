@@ -595,7 +595,7 @@ def _make_sciencedata_http_request(context, method, path, query, payload, header
     try:
         context.logger.warning('Running HTTP request '+method+' on '+url)
         response = (yield AsyncHTTPClient().fetch(request))
-        #IOLoop.current().start()
+        IOLoop.current().start()
     except HTTPClientError as exception:
         if exception.response.code != 404:
             context.logger.warning(exception.response.body)
