@@ -42,7 +42,6 @@ from notebook.services.contents.manager import (
 )
 
 from webdav3.client import Client
-from __builtin__ import False
 
 NOTEBOOK_SUFFIX = '.ipynb'
 CHECKPOINT_SUFFIX = '.checkpoints'
