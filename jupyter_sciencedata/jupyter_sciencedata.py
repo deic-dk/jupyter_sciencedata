@@ -590,7 +590,7 @@ def _make_sciencedata_http_request(context, method, path, query, payload, header
     request = HTTPRequest(url, method=method, headers=all_headers, body=body, validate_cert=False, allow_nonstandard_methods=True)
 
     try:
-        context.logger.warning('Running HTTP request '+method+' on '+url)
+        context.logger.info('Running HTTP request '+method+' on '+url)
         response = (yield AsyncHTTPClient().fetch(request))
         #IOLoop.current().start()
     except HTTPClientError as exception:
