@@ -276,7 +276,6 @@ def _file_exists(context, path):
 
     return False if _is_root(path) else (yield get_file_etag())!=''
 
-@gen.coroutine
 def _get_etag(context, path):
 
     @gen.coroutine
@@ -288,7 +287,7 @@ def _get_etag(context, path):
         context.logger.warning('ETag: '+etag)
         return etag
 
-    return _run_sync_in_new_thread(_get_etag_async)
+    return (yield _get_etag_async())
 
 @gen.coroutine
 def _exists(context, path):
@@ -595,7 +594,7 @@ def _make_sciencedata_http_request(context, method, path, query, payload, header
     try:
         context.logger.warning('Running HTTP request '+method+' on '+url)
         response = (yield AsyncHTTPClient().fetch(request))
-        IOLoop.current().start()
+        #IOLoop.current().start()
     except HTTPClientError as exception:
         if exception.response.code != 404:
             context.logger.warning(exception.response.body)
