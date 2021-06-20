@@ -279,7 +279,7 @@ def _get_etag(context, path):
             return ''
         response = yield _make_sciencedata_http_request(context, 'HEAD', path, {}, b'', {})
         etag = response.headers['ETag'] if ('ETag' in response.headers) else ''
-        context.logger.warning('ETag: '+etag)
+        context.logger.info('ETag: '+etag)
         return etag
 
     return _run_sync_in_new_thread(_get_etag_async)
