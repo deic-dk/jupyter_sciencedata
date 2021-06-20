@@ -25,6 +25,9 @@ from tornado.httpclient import (
 from tornado.ioloop import IOLoop
 from tornado.locks import Lock
 from tornado.web import HTTPError as HTTPServerError
+
+AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient")
+
 from traitlets.config.configurable import Configurable
 from traitlets import (
     Dict,
