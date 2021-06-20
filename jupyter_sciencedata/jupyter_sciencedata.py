@@ -585,7 +585,7 @@ def _make_sciencedata_http_request(context, method, path, query, payload, header
     body = \
         payload if method == 'PUT' else \
         None
-    request = HTTPRequest(url, method=method, headers=all_headers, body=body, validate_cert=False)
+    request = HTTPRequest(url, method=method, headers=all_headers, body=body, validate_cert=False, allow_nonstandard_methods=True)
 
     try:
         context.logger.warning('Running HTTP request '+method+' on '+url)
