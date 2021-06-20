@@ -332,7 +332,7 @@ def _get_directory(context, path, content):
     files = webdav_client.list(path, get_info=True) if content else []
     return {
         'name': _final_path_component(path),
-        'path': path,
+        'path': path.replace(SCIENCEDATA_PREFIX, ''),
         'type': 'directory',
         'mimetype': None,
         'writable': True,
@@ -342,8 +342,8 @@ def _get_directory(context, path, content):
         'content': [
             {
                 'type': 'directory' if file['isdir'] else _type_from_path_not_directory(file['path']),
-                'name': file['name'],
-                'path':file['path'],
+                'name': _final_path_component(file['path']),
+                'path': file['path'].replace(SCIENCEDATA_PREFIX, ''),
                 'last_modified': file['modified'],
             }
             for (file) in files
