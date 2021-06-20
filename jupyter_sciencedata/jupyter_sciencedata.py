@@ -220,7 +220,7 @@ class JupyterScienceData(ContentsManager):
         )
 
 def _final_path_component(path):
-    return path.split('/')[-1]
+    return (re.sub('/$', '', path)).split('/')[-1]
 
 # We don't save type/format to S3, so we do some educated guesswork
 # as to the types/formats of returned values.
@@ -346,7 +346,7 @@ def _get_directory(context, path, content):
                 'path': file['path'].replace(SCIENCEDATA_PREFIX, ''),
                 'last_modified': file['modified'],
             }
-            for (file) in files
+            for (file) in files.pop(0)
         ] if content else None
     }
 
