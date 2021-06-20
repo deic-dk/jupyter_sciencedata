@@ -376,7 +376,9 @@ def _save_file_text(context, chunk, content, path):
 
 @gen.coroutine
 def _save_directory(context, chunk, content, path):
-    return (yield _save_any(context, chunk, b'', path + '/', 'directory', None))
+    if(not webdav_client.mkdir(path)):
+        raise Exception("something went wrong...")
+    return _saved_model(path, 'directory', None, datetime.datetime.now())
 
 @gen.coroutine
 def _save_any(context, chunk, content_bytes, path, type, mimetype):
