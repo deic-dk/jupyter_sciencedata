@@ -42,6 +42,7 @@ from notebook.services.contents.manager import (
 )
 
 from webdav3.client import Client
+from __builtin__ import False
 
 NOTEBOOK_SUFFIX = '.ipynb'
 CHECKPOINT_SUFFIX = '.checkpoints'
@@ -264,17 +265,15 @@ def _dir_exists(context, path):
 
 @gen.coroutine
 def _file_exists(context, path):
-    @gen.coroutine
-    def get_file_etag():
-        try:
-            etag = _get_etag(context, path)
-        except HTTPClientError as exception:
-            if exception.response.code != 404:
-                raise HTTPServerError(exception.response.code, 'Error checking if file exists')
-            etag = ''
-        return etag
-
-    return False if _is_root(path) else (yield get_file_etag())!=''
+    if _is_root(path):
+        return False
+    try:
+        etag = _get_etag(context, path)
+    except HTTPClientError as exception:
+        if exception.response.code != 404:
+            raise HTTPServerError(exception.response.code, 'Error checking if file exists')
+        etag = ''
+    return etag!=''
 
 def _get_etag(context, path):
 
