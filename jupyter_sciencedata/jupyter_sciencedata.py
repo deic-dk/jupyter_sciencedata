@@ -274,19 +274,21 @@ def _file_exists(context, path):
             etag = ''
         return etag
 
-    return False if _is_root(path) else _run_sync_in_new_thread(get_file_etag)
+    return False if _is_root(path) else (yield get_file_etag())!=''
 
 @gen.coroutine
 def _get_etag(context, path):
 
     @gen.coroutine
-    def get_etag():
+    def _get_etag_async():
+        if _is_root(path):
+            return ''
         response = yield _make_sciencedata_http_request(context, 'HEAD', path, {}, b'', {})
         etag = response.headers['ETag'] if ('ETag' in response.headers) else ''
         context.logger.warning('ETag: '+etag)
         return etag
 
-    return ('' if _is_root(path) else (yield get_etag()))
+    return _run_sync_in_new_thread(_get_etag_async)
 
 @gen.coroutine
 def _exists(context, path):
