@@ -250,17 +250,13 @@ def _is_root(path):
 
 @gen.coroutine
 def _dir_exists(context, path):
-    @gen.coroutine
-    def get_dir_etag():
-        try:
-            etag = _get_etag(context, path)
-        except HTTPClientError as exception:
-            if exception.response.code != 404:
-                raise HTTPServerError(exception.response.code, 'Error checking if file exists')
-            etag = 'notfound'
-        return etag
-
-    return (True if _is_root(path) else (True if (yield get_dir_etag())=='' else False))
+    if _is_root(path):
+        return True
+    try:
+        etag = _get_etag(context, path)
+    except HTTPServerError as exception:
+        etag = 'notfound'
+    return etag==''
 
 @gen.coroutine
 def _file_exists(context, path):
