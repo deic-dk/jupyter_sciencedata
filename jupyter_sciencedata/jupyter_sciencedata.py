@@ -113,17 +113,16 @@ class JupyterScienceData(ContentsManager):
     # Do not use a checkpoints class: the rest of the system
     # only expects a ContentsManager
     #checkpoints_class = None
-    root_dir = Unicode("./", config=True)
+    #root_dir = Unicode("./", config=True)
     
-    def _checkpoints_class_default(self):
-        return GenericFileCheckpoints
+    #checkpoints_class = GenericFileCheckpoints
     # Some of the write functions contain multiple S3 call
     # We do what we can to prevent bad things from happening
-    write_lock = Instance(Lock)
+    #write_lock = Instance(Lock)
 
-    @default('write_lock')
-    def _write_lock_default(self):
-        return Lock()
+    #@default('write_lock')
+    #def _write_lock_default(self):
+    #    return Lock()
 
     multipart_uploads = Instance(ExpiringDict)
 
@@ -164,41 +163,35 @@ class JupyterScienceData(ContentsManager):
     def save(self, model, path):
         @gen.coroutine
         def save_async():
-            with (yield self.write_lock.acquire()):
-                return (yield _save(self._context(), model, path))
+            return (yield _save(self._context(), model, path))
 
         return _run_sync_in_new_thread(save_async)
 
     def delete_file(self, path):
         @gen.coroutine
         def delete_async():
-            with (yield self.write_lock.acquire()):
-                return (yield _delete(self._context(), path))
+            return (yield _delete(self._context(), path))
 
         return _run_sync_in_new_thread(delete_async)
 
     def rename_file(self, old_path, new_path):
         @gen.coroutine
         def rename_async():
-            with (yield self.write_lock.acquire()):
-                return (yield _rename(self._context(), old_path, new_path))
+            return (yield _rename(self._context(), old_path, new_path))
 
         return _run_sync_in_new_thread(rename_async)
 
     @gen.coroutine
     def new_untitled(self, path='', type='', ext=''):
-        with (yield self.write_lock.acquire()):
-            return (yield _new_untitled(self._context(), path, type, ext))
+        return (yield _new_untitled(self._context(), path, type, ext))
 
     @gen.coroutine
     def new(self, model, path):
-        with (yield self.write_lock.acquire()):
-            return (yield _new(self._context(), model, path))
+        return (yield _new(self._context(), model, path))
 
     @gen.coroutine
     def copy(self, from_path, to_path):
-        with (yield self.write_lock.acquire()):
-            return (yield _copy(self._context(), from_path, to_path))
+        return (yield _copy(self._context(), from_path, to_path))
 
 #     @gen.coroutine
 #     def create_checkpoint(self, path):
