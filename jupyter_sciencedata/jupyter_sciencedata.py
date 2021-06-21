@@ -166,8 +166,8 @@ class JupyterScienceData(ContentsManager):
     def delete_file(self, path):
         @gen.coroutine
         def delete_async():
-            with (yield self.write_lock.acquire()):
-                return (yield _delete(self._context(), path))
+            #with (yield self.write_lock.acquire()):
+            return (yield _delete(self._context(), path))
 
         return _run_sync_in_new_thread(delete_async)
 
