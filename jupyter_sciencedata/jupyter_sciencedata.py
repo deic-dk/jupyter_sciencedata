@@ -174,9 +174,6 @@ class JupyterScienceData(ContentsManager):
 
         return _run_sync_in_new_thread(delete_async)
 
-    def delete(self, path):
-        return self.delete_file(self, path)
-
     def rename_file(self, old_path, new_path):
         @gen.coroutine
         def rename_async():
