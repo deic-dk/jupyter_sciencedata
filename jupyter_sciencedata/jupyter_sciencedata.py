@@ -59,6 +59,10 @@ Context = namedtuple('Context', [
     'logger', 'multipart_uploads'
 ])
 
+CheckpointContext = namedtuple('Context', [
+    'logger'
+])
+
 SCIENCEDATA_HEADERS = {};
 SCIENCEDATA_PREFIX = "/files/";
 SCIENCEDATA_HOST = "sciencedata";
@@ -111,7 +115,7 @@ class Datetime(TraitType):
 class OpCheckpoints(GenericCheckpointsMixin, Checkpoints):
 
     def _context(self):
-        return Context(
+        return CheckpointContext(
             logger=self.log,
         )
 
