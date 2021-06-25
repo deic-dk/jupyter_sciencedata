@@ -175,7 +175,7 @@ class JupyterScienceData(ContentsManager):
         return _run_sync_in_new_thread(delete_async)
 
     def delete(self, path):
-        return delete_file(self, path)
+        return self.delete_file(self, path)
 
     def rename_file(self, old_path, new_path):
         @gen.coroutine
@@ -192,9 +192,9 @@ class JupyterScienceData(ContentsManager):
     def new(self, model, path):
         return (yield _new(self._context(), model, path))
 
-    #@gen.coroutine
-    #def copy(self, from_path, to_path):
-    #    return (yield _copy(self._context(), from_path, to_path))
+#    @gen.coroutine
+#    def copy(self, from_path, to_path):
+#        return (yield _copy(self._context(), from_path, to_path))
 
 #     @gen.coroutine
 #     def create_checkpoint(self, path):
