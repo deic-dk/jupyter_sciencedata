@@ -110,6 +110,12 @@ class Datetime(TraitType):
 
 class OpCheckpoints(GenericCheckpointsMixin, Checkpoints):
 
+    def _context(self):
+        return Context(
+            logger=self.log,
+            multipart_uploads=self.multipart_uploads,
+        )
+
     def create_file_checkpoint(self, content, format, path):
         with (yield self.write_lock.acquire()):
             return (yield _create_checkpoint(self._context(), path))
