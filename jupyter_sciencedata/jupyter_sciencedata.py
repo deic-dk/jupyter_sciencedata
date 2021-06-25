@@ -110,12 +110,9 @@ class Datetime(TraitType):
 
 class OpCheckpoints(GenericCheckpointsMixin, Checkpoints):
 
-    multipart_uploads = Instance(ExpiringDict)
-
     def _context(self):
         return Context(
             logger=self.log,
-            multipart_uploads=self.multipart_uploads,
         )
 
     def create_file_checkpoint(self, content, format, path):
