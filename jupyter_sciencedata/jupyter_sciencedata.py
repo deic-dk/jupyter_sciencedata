@@ -112,10 +112,10 @@ class JupyterScienceData(ContentsManager):
 
     # Do not use a checkpoints class: the rest of the system
     # only expects a ContentsManager
-    #checkpoints_class = None
+    checkpoints_class = None
     #root_dir = Unicode("./", config=True)
     
-    checkpoints_class = GenericFileCheckpoints
+    #checkpoints_class = GenericFileCheckpoints
     # Some of the write functions contain multiple S3 call
     # We do what we can to prevent bad things from happening
     #write_lock = Instance(Lock)
