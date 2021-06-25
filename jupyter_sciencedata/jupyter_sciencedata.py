@@ -203,9 +203,9 @@ class JupyterScienceData(ContentsManager):
 #         with (yield self.write_lock.acquire()):
 #             return (yield _restore_checkpoint(self._context(), checkpoint_id, path))
 # 
-     @gen.coroutine
-     def list_checkpoints(self, path):
-         return (yield _list_checkpoints(self._context(), path))
+    @gen.coroutine
+    def list_checkpoints(self, path):
+        return (yield _list_checkpoints(self._context(), path))
 # 
 #     @gen.coroutine
 #     def delete_checkpoint(self, checkpoint_id, path):
