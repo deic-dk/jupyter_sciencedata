@@ -192,9 +192,9 @@ class JupyterScienceData(ContentsManager):
     def new(self, model, path):
         return (yield _new(self._context(), model, path))
 
-    @gen.coroutine
-    def copy(self, from_path, to_path):
-        return (yield _copy(self._context(), from_path, to_path))
+    #@gen.coroutine
+    #def copy(self, from_path, to_path):
+    #    return (yield _copy(self._context(), from_path, to_path))
 
 #     @gen.coroutine
 #     def create_checkpoint(self, path):
