@@ -48,6 +48,7 @@ from notebook.services.contents.manager import (
 )
 
 from webdav3.client import Client
+from webdav3.exceptions import RemoteResourceNotFound
 
 NOTEBOOK_SUFFIX = '.ipynb'
 CHECKPOINT_SUFFIX = '.checkpoints'
@@ -197,7 +198,7 @@ def _delete_checkpoint(context, checkpoint_id, path):
 def _list_checkpoints(context, path):
     try:
         files = webdav_client.list(path, get_info=True)
-    except webdav3.exceptions.RemoteResourceNotFound:
+    except RemoteResourceNotFound:
         files = []
     
     return [
