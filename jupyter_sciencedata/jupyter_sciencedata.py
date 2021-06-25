@@ -137,8 +137,12 @@ class OpCheckpoints(GenericCheckpointsMixin, Checkpoints):
         return (yield _get_model_at_checkpoint(self._context(), path))
 
     def delete_checkpoint(self, checkpoint_id, path):
-        with (yield self.write_lock.acquire()):
+
+        @gen.coroutine
+        def delete_checkpoint_async():
             return (yield _delete_checkpoint(self._context(), checkpoint_id, path))
+
+        return _run_sync_in_new_thread(delete_checkpoint_async)
 
     def list_checkpoints(self, path):
         return (yield _list_checkpoints(self._context(), path))
