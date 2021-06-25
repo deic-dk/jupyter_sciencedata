@@ -50,7 +50,7 @@ from notebook.services.contents.manager import (
 from webdav3.client import Client
 
 NOTEBOOK_SUFFIX = '.ipynb'
-#HECKPOINT_SUFFIX = '.checkpoints'
+CHECKPOINT_SUFFIX = '.checkpoints'
 UNTITLED_NOTEBOOK = 'Untitled'
 UNTITLED_FILE = 'Untitled'
 UNTITLED_DIRECTORY  = 'Untitled Folder'
@@ -108,21 +108,96 @@ class Datetime(TraitType):
     klass = datetime.datetime
     default_value = datetime.datetime(1900, 1, 1)
 
+class OpCheckpoints(GenericCheckpointsMixin, Checkpoints):
+
+    def create_file_checkpoint(self, content, format, path):
+        with (yield self.write_lock.acquire()):
+            return (yield _create_checkpoint(self._context(), path))
+
+    def create_notebook_checkpoint(self, nb, path):
+        with (yield self.write_lock.acquire()):
+            return (yield _create_checkpoint(self._context(), path))
+
+    def get_file_checkpoint(self, checkpoint_id, path):
+#        """ -> {'type': 'file', 'content': <str>, 'format': {'text', 'base64'}}"""
+        return (yield _get_model_at_checkpoint(self._context(), path))
+
+    def get_notebook_checkpoint(self, checkpoint_id, path):
+        #""" -> {'type': 'notebook', 'content': <output of nbformat.read>}"""
+        return (yield _get_model_at_checkpoint(self._context(), path))
+
+    def delete_checkpoint(self, checkpoint_id, path):
+        with (yield self.write_lock.acquire()):
+            return (yield _delete_checkpoint(self._context(), checkpoint_id, path))
+
+    def list_checkpoints(self, path):
+        return (yield _list_checkpoints(self._context(), path))
+
+    def rename_checkpoint(self, checkpoint_id, old_path, new_path):
+        return (yield _rename_checkpoint(self._context(), checkpoint_id, old_path, new_path))
+
+#     @gen.coroutine
+#     def restore_checkpoint(self, checkpoint_id, path):
+#         with (yield self.write_lock.acquire()):
+#             return (yield _restore_checkpoint(self._context(), checkpoint_id, path))
+
+def _checkpoint_path(path, checkpoint_id):
+    return path + '/' + CHECKPOINT_SUFFIX + '/' + checkpoint_id
+
+@gen.coroutine
+def _create_checkpoint(context, path):
+    model = yield _get(context, path, content=True, type=None, format=None)
+    type = model['type']
+    content = model['content']
+    format = model['format']
+ 
+    checkpoint_id = str(int(time.time() * 1000000))
+    checkpoint_path = _checkpoint_path(path, checkpoint_id)
+    yield SAVERS[(type, format)](context, None, content, checkpoint_path)
+    # This is a new object, so shouldn't be any eventual consistency issues
+    checkpoint = yield GETTERS[(type, format)](context, checkpoint_path, False)
+    return {
+        'id': checkpoint_id,
+        'last_modified': checkpoint['last_modified'],
+    }
+ 
+@gen.coroutine
+def _get_model_at_checkpoint(context, type, checkpoint_id, path):
+    format = _format_from_type_and_path(context, type, path)
+    checkpoint_path = _checkpoint_path(path, checkpoint_id)
+    return (yield GETTERS[(type, format)](context, checkpoint_path, True))
+ 
+#@gen.coroutine
+#def _restore_checkpoint(context, checkpoint_id, path):
+#    type = (yield _get(context, path, content=False, type=None, format=None))['type']
+#    model = yield _get_model_at_checkpoint(context, type, checkpoint_id, path)
+#    yield _save(context, model, path)
+
+@gen.coroutine
+def _rename_checkpoint(context, checkpoint_id, old_path, new_path):
+    old_checkpoint_path = _checkpoint_path(old_path, checkpoint_id)
+    new_checkpoint_path = _checkpoint_path(new_path, checkpoint_id)
+    yield _rename(context, old_checkpoint_path, new_checkpoint_path)
+
+@gen.coroutine
+def _delete_checkpoint(context, checkpoint_id, path):
+    checkpoint_path = _checkpoint_path(path, checkpoint_id)
+    yield _delete(context, checkpoint_path)
+
+@gen.coroutine
+def _list_checkpoints(context, path):
+    files = webdav_client.list(path, get_info=True)
+    return [
+        {
+            'id': file['path'][(file['path'].rfind('/' + CHECKPOINT_SUFFIX + '/') + len('/' + CHECKPOINT_SUFFIX + '/')):],
+            'last_modified': file['modified'],
+        }
+        for file in files
+    ]
+
 class JupyterScienceData(ContentsManager):
 
-    # Do not use a checkpoints class: the rest of the system
-    # only expects a ContentsManager
-    checkpoints_class = None
-    #root_dir = Unicode("./", config=True)
-    
-    #checkpoints_class = GenericFileCheckpoints
-    # Some of the write functions contain multiple S3 call
-    # We do what we can to prevent bad things from happening
-    #write_lock = Instance(Lock)
-
-    #@default('write_lock')
-    #def _write_lock_default(self):
-    #    return Lock()
+    checkpoints_class = OpCheckpoints
 
     multipart_uploads = Instance(ExpiringDict)
 
@@ -192,25 +267,6 @@ class JupyterScienceData(ContentsManager):
 #    @gen.coroutine
 #    def copy(self, from_path, to_path):
 #        return (yield _copy(self._context(), from_path, to_path))
-
-#     @gen.coroutine
-#     def create_checkpoint(self, path):
-#         with (yield self.write_lock.acquire()):
-#             return (yield _create_checkpoint(self._context(), path))
-# 
-#     @gen.coroutine
-#     def restore_checkpoint(self, checkpoint_id, path):
-#         with (yield self.write_lock.acquire()):
-#             return (yield _restore_checkpoint(self._context(), checkpoint_id, path))
-# 
-#    @gen.coroutine
-#    def list_checkpoints(self, path):
-#        return (yield _list_checkpoints(self._context(), path))
-# 
-#     @gen.coroutine
-#     def delete_checkpoint(self, checkpoint_id, path):
-#         with (yield self.write_lock.acquire()):
-#             return (yield _delete_checkpoint(self._context(), checkpoint_id, path))
 
     def _context(self):
         return Context(
@@ -434,54 +490,6 @@ def _increment_filename(context, filename, path='', insert=''):
         if not (yield _exists(context, f'/{path}/{name}')):
             break
     return name
-
-# def _checkpoint_path(path, checkpoint_id):
-#     return path + '/' + CHECKPOINT_SUFFIX + '/' + checkpoint_id
-
-# @gen.coroutine
-# def _create_checkpoint(context, path):
-#     model = yield _get(context, path, content=True, type=None, format=None)
-#     type = model['type']
-#     content = model['content']
-#     format = model['format']
-# 
-#     checkpoint_id = str(int(time.time() * 1000000))
-#     checkpoint_path = _checkpoint_path(path, checkpoint_id)
-#     yield SAVERS[(type, format)](context, None, content, checkpoint_path)
-#     # This is a new object, so shouldn't be any eventual consistency issues
-#     checkpoint = yield GETTERS[(type, format)](context, checkpoint_path, False)
-#     return {
-#         'id': checkpoint_id,
-#         'last_modified': checkpoint['last_modified'],
-#     }
-# 
-# @gen.coroutine
-# def _get_model_at_checkpoint(context, type, checkpoint_id, path):
-#     format = _format_from_type_and_path(context, type, path)
-#     checkpoint_path = _checkpoint_path(path, checkpoint_id)
-#     return (yield GETTERS[(type, format)](context, checkpoint_path, True))
-# 
-# @gen.coroutine
-# def _restore_checkpoint(context, checkpoint_id, path):
-#     type = (yield _get(context, path, content=False, type=None, format=None))['type']
-#     model = yield _get_model_at_checkpoint(context, type, checkpoint_id, path)
-#     yield _save(context, model, path)
-# 
-# @gen.coroutine
-# def _delete_checkpoint(context, checkpoint_id, path):
-#     checkpoint_path = _checkpoint_path(path, checkpoint_id)
-#     yield _delete(context, checkpoint_path)
-# 
-#@gen.coroutine
-#def _list_checkpoints(context, path):
-#    files = webdav_client.list(path, get_info=True)
-#    return [
-#        {
-#            'id': file['path'][(file['path'].rfind('/' + CHECKPOINT_SUFFIX + '/') + len('/' + CHECKPOINT_SUFFIX + '/')):],
-#            'last_modified': file['modified'],
-#        }
-#        for file in files
-#    ]
 
 @gen.coroutine
 def _rename(context, old_path, new_path):
