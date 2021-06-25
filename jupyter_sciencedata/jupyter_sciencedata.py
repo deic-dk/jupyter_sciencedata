@@ -195,7 +195,11 @@ def _delete_checkpoint(context, checkpoint_id, path):
 
 @gen.coroutine
 def _list_checkpoints(context, path):
-    files = webdav_client.list(path, get_info=True)
+    try:
+        files = webdav_client.list(path, get_info=True)
+    except webdav3.exceptions.RemoteResourceNotFound:
+        files = []
+    
     return [
         {
             'id': file['path'][(file['path'].rfind('/' + CHECKPOINT_SUFFIX + '/') + len('/' + CHECKPOINT_SUFFIX + '/')):],
