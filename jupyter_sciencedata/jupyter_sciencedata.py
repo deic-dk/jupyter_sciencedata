@@ -472,16 +472,16 @@ def _increment_filename(context, filename, path='', insert=''):
 #     checkpoint_path = _checkpoint_path(path, checkpoint_id)
 #     yield _delete(context, checkpoint_path)
 # 
- @gen.coroutine
- def _list_checkpoints(context, path):
-     files = webdav_client.list(path, get_info=True)
-     return [
-         {
-             'id': file['path'][(file['path'].rfind('/' + CHECKPOINT_SUFFIX + '/') + len('/' + CHECKPOINT_SUFFIX + '/')):],
-             'last_modified': file['modified'],
-         }
-         for file in files
-     ]
+@gen.coroutine
+def _list_checkpoints(context, path):
+    files = webdav_client.list(path, get_info=True)
+    return [
+        {
+            'id': file['path'][(file['path'].rfind('/' + CHECKPOINT_SUFFIX + '/') + len('/' + CHECKPOINT_SUFFIX + '/')):],
+            'last_modified': file['modified'],
+        }
+        for file in files
+    ]
 
 @gen.coroutine
 def _rename(context, old_path, new_path):
