@@ -29,7 +29,7 @@ from tornado.web import HTTPError as HTTPServerError
 AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient")
 
 from notebook.services.contents.checkpoints import Checkpoints, GenericCheckpointsMixin
-#from notebook.services.contents.filecheckpoints import GenericFileCheckpoints
+from notebook.services.contents.filecheckpoints import GenericFileCheckpoints
 
 from traitlets.config.configurable import Configurable
 from traitlets import (
@@ -215,7 +215,7 @@ def _list_checkpoints(context, path):
 
 class JupyterScienceData(ContentsManager):
 
-    checkpoints_class = OpCheckpoints
+    checkpoints_class = GenericFileCheckpoints
 
     multipart_uploads = Instance(ExpiringDict)
 
