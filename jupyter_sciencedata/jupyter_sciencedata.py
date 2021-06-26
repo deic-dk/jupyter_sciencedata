@@ -142,7 +142,8 @@ class OpCheckpoints(GenericCheckpointsMixin, Checkpoints):
         def delete_checkpoint_async():
             return (yield _delete_checkpoint(self._context(), checkpoint_id, path))
 
-        return _run_sync_in_new_thread(delete_checkpoint_async)
+        _run_sync_in_new_thread(delete_checkpoint_async)
+        return "ok"
 
     def list_checkpoints(self, path):
         return (yield _list_checkpoints(self._context(), path))
@@ -215,7 +216,7 @@ def _list_checkpoints(context, path):
 
 class JupyterScienceData(ContentsManager):
 
-    checkpoints_class = GenericFileCheckpoints
+    checkpoints_class = OpCheckpoints
 
     multipart_uploads = Instance(ExpiringDict)
 
