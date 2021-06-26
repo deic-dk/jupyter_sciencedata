@@ -345,7 +345,7 @@ def _dir_exists(context, path):
         etag = _get_etag(context, path)
     except HTTPServerError as exception:
         etag = 'notfound'
-    return etag==''
+    return (etag=='')
 
 @gen.coroutine
 def _file_exists(context, path):
@@ -355,7 +355,7 @@ def _file_exists(context, path):
         etag = _get_etag(context, path)
     except HTTPServerError as exception:
         etag = ''
-    return etag!=''
+    return (etag!='')
 
 def _get_etag(context, path):
 
