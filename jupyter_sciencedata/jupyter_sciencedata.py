@@ -345,7 +345,10 @@ def _dir_exists(context, path):
         etag = _get_etag(context, path)
     except HTTPServerError as exception:
         etag = 'notfound'
-    return (etag=='')
+    if etag=='':
+        context.logger.info('ETag: '+etag)
+        return True
+    return False
 
 @gen.coroutine
 def _file_exists(context, path):
