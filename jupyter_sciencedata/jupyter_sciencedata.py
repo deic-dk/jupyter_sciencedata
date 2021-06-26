@@ -146,7 +146,8 @@ class OpCheckpoints(GenericCheckpointsMixin, Checkpoints):
         return _run_sync_in_new_thread(delete_checkpoint_async)
 
     def list_checkpoints(self, path):
-
+        context.logger.info('Listing checkpoints')
+        
         @gen.coroutine
         def list_checkpoints_async():
             return (yield _list_checkpoints(self._context(), path))
@@ -207,7 +208,6 @@ def _delete_checkpoint(context, checkpoint_id, path):
 @gen.coroutine
 def _list_checkpoints(context, path):
     try:
-        context.logger.info('Listing checkpoints')
         files = webdav_client.list(path, get_info=True)
     except RemoteResourceNotFound:
         files = []
@@ -275,6 +275,7 @@ class JupyterScienceData(ContentsManager):
         return _run_sync_in_new_thread(delete_async)
 
     def delete(self, path):
+        context.logger.info('Deleting ' + path)
         @gen.coroutine
         def delete_async():
             return (yield _delete(self._context(), path))
