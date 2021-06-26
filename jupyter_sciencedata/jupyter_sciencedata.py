@@ -194,7 +194,7 @@ def _rename_checkpoint(context, checkpoint_id, old_path, new_path):
     yield _rename(context, old_checkpoint_path, new_checkpoint_path)
 
 @gen.coroutine
-def _delete_checkpoint(context, checkpoint_id, path):
+def _delete_checkpoint(checkpoint_id, path):
     checkpoint_path = _checkpoint_path(path, checkpoint_id)
     yield _delete(context, checkpoint_path)
 
