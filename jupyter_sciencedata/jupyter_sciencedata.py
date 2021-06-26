@@ -272,6 +272,14 @@ class JupyterScienceData(ContentsManager):
 
         return _run_sync_in_new_thread(delete_async)
 
+    def delete(self, path):
+        @gen.coroutine
+        def delete_async():
+            return (yield _delete(self._context(), path))
+
+        return _run_sync_in_new_thread(delete_async)
+
+
     def rename_file(self, old_path, new_path):
         @gen.coroutine
         def rename_async():
