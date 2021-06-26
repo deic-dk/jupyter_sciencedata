@@ -142,11 +142,15 @@ class OpCheckpoints(GenericCheckpointsMixin, Checkpoints):
         def delete_checkpoint_async():
             return (yield _delete_checkpoint(self._context(), checkpoint_id, path))
 
-        _run_sync_in_new_thread(delete_checkpoint_async)
-        return "ok"
+        return _run_sync_in_new_thread(delete_checkpoint_async)
 
     def list_checkpoints(self, path):
-        return (yield _list_checkpoints(self._context(), path))
+
+        @gen.coroutine
+        def list_checkpoints_async():
+            return (yield _list_checkpoints(self._context(), path))
+
+        return _run_sync_in_new_thread(list_checkpoints_async)
 
     def rename_checkpoint(self, checkpoint_id, old_path, new_path):
         return (yield _rename_checkpoint(self._context(), checkpoint_id, old_path, new_path))
