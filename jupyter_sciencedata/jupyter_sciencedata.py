@@ -137,7 +137,7 @@ class OpCheckpoints(GenericCheckpointsMixin, Checkpoints):
         return (yield _get_model_at_checkpoint(self._context(), path))
 
     def delete_checkpoint(self, checkpoint_id, path):
-        context.logger.info('Deleting checkpoint')
+        self._context().logger.info('Deleting checkpoint')
 
         @gen.coroutine
         def delete_checkpoint_async():
@@ -146,7 +146,7 @@ class OpCheckpoints(GenericCheckpointsMixin, Checkpoints):
         return _run_sync_in_new_thread(delete_checkpoint_async)
 
     def list_checkpoints(self, path):
-        context.logger.info('Listing checkpoints')
+        self._context().logger.info('Listing checkpoints')
         
         @gen.coroutine
         def list_checkpoints_async():
@@ -275,7 +275,7 @@ class JupyterScienceData(ContentsManager):
         return _run_sync_in_new_thread(delete_async)
 
     def delete(self, path):
-        context.logger.info('Deleting ' + path)
+        self._context().logger.info('Deleting ' + path)
         @gen.coroutine
         def delete_async():
             return (yield _delete(self._context(), path))
