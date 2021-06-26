@@ -206,6 +206,7 @@ def _delete_checkpoint(context, checkpoint_id, path):
 @gen.coroutine
 def _list_checkpoints(context, path):
     try:
+        context.logger.info('Listing checkpoints')
         files = webdav_client.list(path, get_info=True)
     except RemoteResourceNotFound:
         files = []
@@ -346,7 +347,7 @@ def _dir_exists(context, path):
     except HTTPServerError as exception:
         etag = 'notfound'
     if etag=='':
-        context.logger.info('ETag: '+etag)
+        context.logger.info('Dir exists')
         return True
     return False
 
@@ -358,7 +359,10 @@ def _file_exists(context, path):
         etag = _get_etag(context, path)
     except HTTPServerError as exception:
         etag = ''
-    return (etag!='')
+    if etag!='':
+        context.logger.info('File exists')
+        return True
+    return False
 
 def _get_etag(context, path):
 
