@@ -137,6 +137,7 @@ class OpCheckpoints(GenericCheckpointsMixin, Checkpoints):
         return (yield _get_model_at_checkpoint(self._context(), path))
 
     def delete_checkpoint(self, checkpoint_id, path):
+        context.logger.info('Deleting checkpoint')
 
         @gen.coroutine
         def delete_checkpoint_async():
