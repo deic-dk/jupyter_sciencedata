@@ -426,7 +426,8 @@ def _get_any(context, path, content, type, mimetype, format, decode):
 @gen.coroutine
 def _get_directory(context, path, content):
     files = webdav_client.list(path, get_info=True) if content else []
-    files.pop(0)
+    if(len(files)>0):
+        files.pop(0)
     return {
         'name': _final_path_component(path),
         'path': path.replace(SCIENCEDATA_PREFIX, ''),
