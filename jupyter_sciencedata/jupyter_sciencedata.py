@@ -555,6 +555,7 @@ def _rename(context, old_path, new_path):
 
 @gen.coroutine
 def _delete(context, path):
+    path = path.rstrip('/');
     return (yield _make_sciencedata_http_request(context, 'DELETE', path, {}, b'', {}))
 
 @gen.coroutine
