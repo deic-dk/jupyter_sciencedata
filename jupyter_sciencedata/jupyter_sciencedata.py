@@ -440,7 +440,7 @@ def _get_directory(context, path, content):
             {
                 'type': 'directory' if file['isdir'] else _type_from_path_not_directory(file['path']),
                 'name': _final_path_component(file['path']),
-                'path': file['path'].replace(SCIENCEDATA_PREFIX, ''),
+                'path': file['path'].replace(SCIENCEDATA_PREFIX, '').rstrip('/'),
                 'last_modified': file['modified'],
             }
             for (file) in files
@@ -555,7 +555,6 @@ def _rename(context, old_path, new_path):
 
 @gen.coroutine
 def _delete(context, path):
-    path = path.rstrip('/');
     return (yield _make_sciencedata_http_request(context, 'DELETE', path, {}, b'', {}))
 
 @gen.coroutine
