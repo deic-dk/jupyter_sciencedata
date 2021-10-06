@@ -65,7 +65,7 @@ CheckpointContext = namedtuple('Context', [
 ])
 
 SCIENCEDATA_HEADERS = {};
-SCIENCEDATA_PREFIX = "/files";
+SCIENCEDATA_PREFIX = "/files/";
 SCIENCEDATA_HOST = "sciencedata";
 
 webdav_options = {
