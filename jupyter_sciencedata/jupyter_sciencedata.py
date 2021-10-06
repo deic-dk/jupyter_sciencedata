@@ -65,7 +65,7 @@ CheckpointContext = namedtuple('Context', [
 ])
 
 SCIENCEDATA_HEADERS = {};
-SCIENCEDATA_PREFIX = "/files/";
+SCIENCEDATA_PREFIX = "/files";
 SCIENCEDATA_HOST = "sciencedata";
 
 webdav_options = {
@@ -178,9 +178,10 @@ def _create_checkpoint(context, path):
     format = model['format']
  
     checkpoint_id = str(int(time.time() * 1000000))
-    checkpoint_path = _checkpoint_path(path, checkpoint_id)
-    if not (yield _dir_exists(context, os.path.dirname(checkpoint_path))):
-        webdav_client.mkdir(os.path.dirname(path))
+    dir_path = os.path.dirname(path)
+    checkpoint_path = _checkpoint_path(dir_path, checkpoint_id)
+    if not (yield _dir_exists(context, dir_path)):
+        webdav_client.mkdir(dir_path)
     print("SAVING "+type+":"+format+":"+checkpoint_path)
     yield SAVERS[(type, format)](context, None, content, checkpoint_path)
     # This is a new object, so shouldn't be any eventual consistency issues
@@ -438,7 +439,7 @@ def _get_directory(context, path, content):
         files.pop(0)
     return {
         'name': _final_path_component(path),
-        'path': path.replace(SCIENCEDATA_PREFIX, ''),
+        'path': path.replace(SCIENCEDATA_PREFIX, '', 1),
         'type': 'directory',
         'mimetype': None,
         'writable': True,
@@ -449,7 +450,7 @@ def _get_directory(context, path, content):
             {
                 'type': 'directory' if file['isdir'] else _type_from_path_not_directory(file['path']),
                 'name': _final_path_component(file['path']),
-                'path': file['path'].replace(SCIENCEDATA_PREFIX, '').rstrip('/'),
+                'path': file['path'].replace(SCIENCEDATA_PREFIX, '', 1).rstrip('/'),
                 'last_modified': file['modified'],
             }
             for (file) in files
