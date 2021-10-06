@@ -174,7 +174,8 @@ class OpCheckpoints(GenericCheckpointsMixin, Checkpoints):
 #             return (yield _restore_checkpoint(self._context(), checkpoint_id, path))
 
 def _checkpoint_path(path, checkpoint_id):
-    return path + '/' + CHECKPOINT_SUFFIX + '/' + checkpoint_id
+    dir_path = os.path.dirname(path)
+    return dir_path + '/' + CHECKPOINT_SUFFIX + '/' + checkpoint_id
 
 @gen.coroutine
 def _create_checkpoint(context, path):
@@ -184,8 +185,7 @@ def _create_checkpoint(context, path):
     format = model['format']
  
     checkpoint_id = str(int(time.time() * 1000000))
-    dir_path = os.path.dirname(path)
-    checkpoint_path = _checkpoint_path(dir_path, checkpoint_id)
+    checkpoint_path = _checkpoint_path(path, checkpoint_id)
     checkpoint_path = '/' + checkpoint_path.lstrip('/')
     if not (yield _dir_exists(context, os.path.dirname(checkpoint_path))):
         webdav_client.mkdir(os.path.dirname(checkpoint_path))
