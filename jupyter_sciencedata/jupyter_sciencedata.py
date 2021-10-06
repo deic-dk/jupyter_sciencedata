@@ -121,12 +121,12 @@ class OpCheckpoints(GenericCheckpointsMixin, Checkpoints):
         )
 
     def create_file_checkpoint(self, content, format, path):
-        with (yield self.write_lock.acquire()):
-            return (yield _create_checkpoint(self._context(), path))
+        #with (yield self.write_lock.acquire()):
+        return (yield _create_checkpoint(self._context(), path))
 
     def create_notebook_checkpoint(self, nb, path):
-        with (yield self.write_lock.acquire()):
-            return (yield _create_checkpoint(self._context(), path))
+        #with (yield self.write_lock.acquire()):
+        return (yield _create_checkpoint(self._context(), path))
 
     def get_file_checkpoint(self, checkpoint_id, path):
 #        """ -> {'type': 'file', 'content': <str>, 'format': {'text', 'base64'}}"""
@@ -461,6 +461,8 @@ def _save(context, model, path):
 
 @gen.coroutine
 def _save_notebook(context, chunk, content, path):
+    if (not (yield _exists(context, os.path.dirname(path)))):
+        webdav_client.mkdir(os.path.dirname(path))
     return (yield _save_any(context, chunk, json.dumps(content).encode('utf-8'), path, 'notebook', None))
 
 @gen.coroutine
