@@ -117,11 +117,21 @@ class OpCheckpoints(GenericCheckpointsMixin, Checkpoints):
 
     def create_file_checkpoint(self, content, format, path):
         #with (yield self.write_lock.acquire()):
-        return (yield _create_checkpoint(self._context(), path))
+        #return (yield _create_checkpoint(self._context(), path))
+        @gen.coroutine
+        def create_checkpoint_async():
+            return (yield _create_checkpoint(self._context(), path))
+
+        return _run_sync_in_new_thread(create_checkpoint_async)
 
     def create_notebook_checkpoint(self, nb, path):
         #with (yield self.write_lock.acquire()):
-        return (yield _create_checkpoint(self._context(), path))
+        #return (yield _create_checkpoint(self._context(), path))
+        @gen.coroutine
+        def create_checkpoint_async():
+            return (yield _create_checkpoint(self._context(), path))
+
+        return _run_sync_in_new_thread(create_checkpoint_async)
 
     def get_file_checkpoint(self, checkpoint_id, path):
 #        """ -> {'type': 'file', 'content': <str>, 'format': {'text', 'base64'}}"""
