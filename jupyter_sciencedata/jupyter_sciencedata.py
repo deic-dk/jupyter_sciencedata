@@ -189,7 +189,7 @@ def _create_checkpoint(context, path):
     checkpoint_path = '/' + checkpoint_path.lstrip('/')
     if not (yield _dir_exists(context, os.path.dirname(checkpoint_path))):
         webdav_client.mkdir(os.path.dirname(checkpoint_path))
-    self._context().logger.info("Saving checkpoint "+type+":"+format+":"+checkpoint_path)
+    context.logger.info("Saving checkpoint "+type+":"+format+":"+checkpoint_path)
     yield SAVERS[(type, format)](context, None, content, checkpoint_path)
     # This is a new object, so shouldn't be any eventual consistency issues
     checkpoint = yield GETTERS[(type, format)](context, checkpoint_path, False)
