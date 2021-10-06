@@ -180,8 +180,9 @@ def _create_checkpoint(context, path):
     checkpoint_id = str(int(time.time() * 1000000))
     dir_path = os.path.dirname(path)
     checkpoint_path = _checkpoint_path(dir_path, checkpoint_id)
-    if not (yield _dir_exists(context, dir_path)):
-        webdav_client.mkdir(dir_path)
+    checkpoint_path = '/' + checkpoint_path.lstrip('/')
+    if not (yield _dir_exists(context, os.path.dirname(checkpoint_path))):
+        webdav_client.mkdir(os.path.dirname(checkpoint_path))
     print("SAVING "+type+":"+format+":"+checkpoint_path)
     yield SAVERS[(type, format)](context, None, content, checkpoint_path)
     # This is a new object, so shouldn't be any eventual consistency issues
