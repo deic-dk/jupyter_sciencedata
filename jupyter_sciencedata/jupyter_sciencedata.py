@@ -116,8 +116,6 @@ class OpCheckpoints(GenericCheckpointsMixin, Checkpoints):
         )
 
     def create_file_checkpoint(self, content, format, path):
-        #with (yield self.write_lock.acquire()):
-        #return (yield _create_checkpoint(self._context(), path))
         @gen.coroutine
         def create_checkpoint_async():
             return (yield _create_checkpoint(self._context(), path))
@@ -125,8 +123,6 @@ class OpCheckpoints(GenericCheckpointsMixin, Checkpoints):
         return _run_sync_in_new_thread(create_checkpoint_async)
 
     def create_notebook_checkpoint(self, nb, path):
-        #with (yield self.write_lock.acquire()):
-        #return (yield _create_checkpoint(self._context(), path))
         @gen.coroutine
         def create_checkpoint_async():
             return (yield _create_checkpoint(self._context(), path))
@@ -134,12 +130,18 @@ class OpCheckpoints(GenericCheckpointsMixin, Checkpoints):
         return _run_sync_in_new_thread(create_checkpoint_async)
 
     def get_file_checkpoint(self, checkpoint_id, path):
-#        """ -> {'type': 'file', 'content': <str>, 'format': {'text', 'base64'}}"""
-        return (yield _get_model_at_checkpoint(self._context(), path))
+        @gen.coroutine
+        def get_file_checkpoint_async():
+             return (yield _get_model_at_checkpoint(self._context(), path))
+
+        return _run_sync_in_new_thread(get_file_checkpoint_async)
 
     def get_notebook_checkpoint(self, checkpoint_id, path):
-        #""" -> {'type': 'notebook', 'content': <output of nbformat.read>}"""
-        return (yield _get_model_at_checkpoint(self._context(), path))
+        @gen.coroutine
+        def get_file_checkpoint_async():
+             return (yield _get_model_at_checkpoint(self._context(), path))
+
+        return _run_sync_in_new_thread(get_file_checkpoint_async)
 
     def delete_checkpoint(self, checkpoint_id, path):
         self._context().logger.info('Deleting checkpoint')
@@ -160,7 +162,11 @@ class OpCheckpoints(GenericCheckpointsMixin, Checkpoints):
         return _run_sync_in_new_thread(list_checkpoints_async)
 
     def rename_checkpoint(self, checkpoint_id, old_path, new_path):
-        return (yield _rename_checkpoint(self._context(), checkpoint_id, old_path, new_path))
+        @gen.coroutine
+        def rename_checkpoint_async():
+             return (yield _rename_checkpoint(self._context(), checkpoint_id, old_path, new_path))
+
+        return _run_sync_in_new_thread(_rename_checkpoint)
 
 #     @gen.coroutine
 #     def restore_checkpoint(self, checkpoint_id, path):
