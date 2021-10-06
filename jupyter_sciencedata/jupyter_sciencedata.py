@@ -132,16 +132,16 @@ class OpCheckpoints(GenericCheckpointsMixin, Checkpoints):
     def get_file_checkpoint(self, checkpoint_id, path):
         @gen.coroutine
         def get_file_checkpoint_async():
-             return (yield _get_model_at_checkpoint(self._context(), path))
+             return (yield _get_model_at_checkpoint(self._context(), 'file', checkpoint_id, path))
 
         return _run_sync_in_new_thread(get_file_checkpoint_async)
 
     def get_notebook_checkpoint(self, checkpoint_id, path):
         @gen.coroutine
-        def get_file_checkpoint_async():
-             return (yield _get_model_at_checkpoint(self._context(), path))
+        def get_notebook_checkpoint_async():
+             return (yield _get_model_at_checkpoint(self._context(), 'notebook', checkpoint_id, path))
 
-        return _run_sync_in_new_thread(get_file_checkpoint_async)
+        return _run_sync_in_new_thread(get_notebook_checkpoint_async)
 
     def delete_checkpoint(self, checkpoint_id, path):
         self._context().logger.info('Deleting checkpoint')
@@ -189,7 +189,7 @@ def _create_checkpoint(context, path):
     checkpoint_path = '/' + checkpoint_path.lstrip('/')
     if not (yield _dir_exists(context, os.path.dirname(checkpoint_path))):
         webdav_client.mkdir(os.path.dirname(checkpoint_path))
-    print("SAVING "+type+":"+format+":"+checkpoint_path)
+    self._context().logger.info("Saving checkpoint "+type+":"+format+":"+checkpoint_path)
     yield SAVERS[(type, format)](context, None, content, checkpoint_path)
     # This is a new object, so shouldn't be any eventual consistency issues
     checkpoint = yield GETTERS[(type, format)](context, checkpoint_path, False)
@@ -328,7 +328,7 @@ class JupyterScienceData(ContentsManager):
 def _final_path_component(path):
     return (re.sub('/$', '', path)).split('/')[-1]
 
-# We don't save type/format to S3, so we do some educated guesswork
+# We don't save type/format to sciencedata, so we do some educated guesswork
 # as to the types/formats of returned values.
 @gen.coroutine
 def _type_from_path(context, path):
