@@ -181,7 +181,7 @@ def _create_checkpoint(context, path):
     checkpoint_path = _checkpoint_path(path, checkpoint_id)
     if not (yield _dir_exists(context, os.path.dirname(checkpoint_path))):
         webdav_client.mkdir(os.path.dirname(path))
-    print("SAVING "+type+":"+format+":"+checkpoint_path+":"+content)
+    print("SAVING "+type+":"+format+":"+checkpoint_path)
     yield SAVERS[(type, format)](context, None, content, checkpoint_path)
     # This is a new object, so shouldn't be any eventual consistency issues
     checkpoint = yield GETTERS[(type, format)](context, checkpoint_path, False)
