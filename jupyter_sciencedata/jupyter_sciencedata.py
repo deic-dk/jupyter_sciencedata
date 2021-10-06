@@ -108,11 +108,6 @@ class ExpiringDict:
         self._remove_old_keys(now)
         del self._store[key]
 
-
-class Datetime(TraitType):
-    klass = datetime.datetime
-    default_value = datetime.datetime(1900, 1, 1)
-
 class OpCheckpoints(GenericCheckpointsMixin, Checkpoints):
 
     def _context(self):
@@ -174,6 +169,9 @@ def _create_checkpoint(context, path):
  
     checkpoint_id = str(int(time.time() * 1000000))
     checkpoint_path = _checkpoint_path(path, checkpoint_id)
+    if not (yield _dir_exists(context, os.path.dirname(checkpoint_path))):
+        webdav_client.mkdir(os.path.dirname(path))
+    print("SAVING "+type+":"+format+":"+checkpoint_path+":"+content)
     yield SAVERS[(type, format)](context, None, content, checkpoint_path)
     # This is a new object, so shouldn't be any eventual consistency issues
     checkpoint = yield GETTERS[(type, format)](context, checkpoint_path, False)
@@ -461,8 +459,6 @@ def _save(context, model, path):
 
 @gen.coroutine
 def _save_notebook(context, chunk, content, path):
-    if (not (yield _exists(context, os.path.dirname(path)))):
-        webdav_client.mkdir(os.path.dirname(path))
     return (yield _save_any(context, chunk, json.dumps(content).encode('utf-8'), path, 'notebook', None))
 
 @gen.coroutine
