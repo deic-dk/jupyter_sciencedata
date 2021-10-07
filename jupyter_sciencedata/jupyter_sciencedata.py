@@ -223,8 +223,10 @@ def _delete_checkpoint(context, checkpoint_id, path):
 
 @gen.coroutine
 def _list_checkpoints(context, path):
+    checkpoints_dir = os.path.dirname(path) + '/' + CHECKPOINT_SUFFIX
+
     try:
-        files = webdav_client.list(path, get_info=True)
+        files = webdav_client.list(checkpoints_dir, get_info=True)
     except RemoteResourceNotFound:
         files = []
     
