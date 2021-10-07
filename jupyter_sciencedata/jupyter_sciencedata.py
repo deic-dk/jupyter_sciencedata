@@ -230,7 +230,7 @@ def _list_checkpoints(context, path):
     except RemoteResourceNotFound:
         files = []
     
-    files = list(filter(lambda file: file['path'].rfind('/' + CHECKPOINT_SUFFIX + '/'), files))
+    files = list(filter(lambda file: not file['path'].rstrip('/').endswith(CHECKPOINT_SUFFIX), files))
     
     return [
         {
