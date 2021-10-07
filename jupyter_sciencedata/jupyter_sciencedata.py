@@ -153,7 +153,7 @@ class OpCheckpoints(GenericCheckpointsMixin, Checkpoints):
         return _run_sync_in_new_thread(delete_checkpoint_async)
 
     def list_checkpoints(self, path):
-        self._context().logger.info('Listing checkpoints')
+        self._context().logger.info('Listing checkpoints at '+path)
         
         @gen.coroutine
         def list_checkpoints_async():
