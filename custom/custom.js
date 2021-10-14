@@ -81,6 +81,7 @@
   loadingDiv.classList.add('loading');
   loaderDiv.appendChild(loadingDiv);
   document.body.appendChild(loaderDiv);
+	$('.loader').show();
 
   // Load the script
   const script = document.createElement("script");
@@ -92,8 +93,8 @@
     //$('#notebook_list').click(function(){$('.loader').show();});
   });
   document.head.appendChild(script);
-  
-	$('.loader').show();
+	$('.loader').hide();
+
 })();
 
 (function(send) {
