@@ -90,6 +90,7 @@
     console.log(`jQuery ${$.fn.jquery} has been loaded successfully!`);
     // use jQuery below
     //$('#notebook_list').click(function(){$('.loader').show();});
+  });
   document.head.appendChild(script);
 })();
 
@@ -106,5 +107,4 @@
     send.call(this, body);
 };
 })(XMLHttpRequest.prototype.send);
-
 
