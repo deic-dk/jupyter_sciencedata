@@ -112,6 +112,6 @@
 /*$(window).on('load', function() {
 	$('.loader').hide();
 });*/
-$(document).load(function () {
+$(document).ready(function () {
 	$('.loader').hide();
 });
