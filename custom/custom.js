@@ -109,3 +109,6 @@
 };
 })(XMLHttpRequest.prototype.send);
 
+$(window).on('load', function() {
+	$('.loader').hide();
+});
