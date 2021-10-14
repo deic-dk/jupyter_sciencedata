@@ -73,9 +73,7 @@
  * @static
  */
 
-(function() {
-	$('.loader').show();
-	
+(function() {	
   // Append loading div to body
   var loaderDiv = document.createElement('div');
   var loadingDiv = document.createElement('div');
@@ -83,6 +81,7 @@
   loadingDiv.classList.add('loading');
   loaderDiv.appendChild(loadingDiv);
   document.body.appendChild(loaderDiv);
+	$('.loader').show();
 
   // Load the script
   const script = document.createElement("script");
