@@ -74,6 +74,8 @@
  */
 
 (function() {
+	$('.loader').show();
+	
   // Append loading div to body
   var loaderDiv = document.createElement('div');
   var loadingDiv = document.createElement('div');
