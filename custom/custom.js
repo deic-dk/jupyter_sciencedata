@@ -81,7 +81,6 @@
   loadingDiv.classList.add('loading');
   loaderDiv.appendChild(loadingDiv);
   document.body.appendChild(loaderDiv);
-	$('.loader').show();
 
   // Load the script
   const script = document.createElement("script");
@@ -93,14 +92,13 @@
     //$('#notebook_list').click(function(){$('.loader').show();});
   });
   document.head.appendChild(script);
-	$('.loader').hide();
 
 })();
 
 (function(send) {
   XMLHttpRequest.prototype.send = function(body) {
     this.addEventListener('readystatechange', function() {
-      if (this.responseURL.includes('kube') && this.readyState === 4) {
+      if (/*this.responseURL.includes('kube') && */this.readyState === 4) {
         $('.loader').hide();
       }
     }, false);
