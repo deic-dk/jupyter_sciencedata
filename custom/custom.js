@@ -116,5 +116,6 @@
 	$('.loader').hide();
 });*/
 $(document).ready(function () {
+	alert();
 	//$('.loader').hide();
 });
