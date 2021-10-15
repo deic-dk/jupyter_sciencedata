@@ -90,6 +90,7 @@
     console.log(`jQuery ${$.fn.jquery} has been loaded successfully!`);
     // use jQuery below
     //$('#notebook_list').click(function(){$('.loader').show();});
+    $('.loader').hide();
   });
   document.head.appendChild(script);
 
