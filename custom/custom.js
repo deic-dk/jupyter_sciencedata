@@ -116,6 +116,6 @@
 	$('.loader').hide();
 });*/
 $(document).ready(function () {
-	alert();
-	//$('.loader').hide();
+  document.getElementsByTagName("html")[0].style.visibility = "visible";
+  $('.loader').hide();
 });
