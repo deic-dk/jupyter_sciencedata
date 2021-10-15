@@ -114,5 +114,5 @@
 	$('.loader').hide();
 });*/
 $(document).ready(function () {
-	$('.loader').hide();
+	//$('.loader').hide();
 });
