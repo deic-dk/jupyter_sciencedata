@@ -93,6 +93,7 @@
     // use jQuery below
     //$('#notebook_list').click(function(){$('.loader').show();});
     //$('.loader').hide();
+    $('html').show();
   });
   document.head.appendChild(script);
 
