@@ -92,12 +92,13 @@
     console.log(`jQuery ${$.fn.jquery} has been loaded successfully!`);
     // use jQuery below
     //$('#notebook_list').click(function(){$('.loader').show();});
-    $('.loader').show();
-    alert('script');
+    $('.loader').hide();
+    $('html').css('visibility', 'visible');
+    //alert('3 script');
   });
   document.head.appendChild(script);
-  $('html').css('visibility', 'visible');
-  alert('function');
+  $('.loader').show();
+  //alert('1 function');
 })();
 
 (function(send) {
@@ -114,13 +115,8 @@
 };
 })(XMLHttpRequest.prototype.send);
 
-$(window).on('load', function() {
-  //$('html').css('visibility', 'visible');
-  //$('.loader').hide();
-	alert('load');
-});
 $(document).ready(function () {
   //document.getElementsByTagName("html")[0].style.visibility = "visible";
   //$('.loader').hide();
-	alert('ready')
+	//alert('2 ready')
 });
