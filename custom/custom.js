@@ -93,7 +93,17 @@
     // use jQuery below
     //$('#notebook_list').click(function(){$('.loader').show();});
     $('.loader').hide();
-    $('html').css('visibility', 'visible');
+    
+    function recursive() {
+      setTimeout(function(){
+       if ($('#notebook_list .list_item').length){
+      	 $('html').css('visibility', 'visible');
+       }
+       else{
+        recursive();
+       }
+      }, 100)
+    }
     //alert('3 script');
   });
   document.head.appendChild(script);
@@ -116,7 +126,7 @@
 })(XMLHttpRequest.prototype.send);
 
 $(document).ready(function () {
-  //document.getElementsByTagName("html")[0].style.visibility = "visible";
-  //$('.loader').hide();
+	//document.getElementsByTagName("html")[0].style.visibility = "visible";
+	//$('.loader').hide();
 	//alert('2 ready')
 });
