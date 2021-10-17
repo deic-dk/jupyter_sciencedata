@@ -91,9 +91,6 @@
   script.addEventListener('load', () => {
     console.log(`jQuery ${$.fn.jquery} has been loaded successfully!`);
     // use jQuery below
-    //$('#notebook_list').click(function(){$('.loader').show();});
-    //$('.loader').hide();
-    
     function recursive() {
     	console.log("Recursing. "+$('#notebook_list .list_item').length);
       setTimeout(function(){
@@ -107,10 +104,8 @@
       }, 100)
     }
     recursive();
-    //alert('3 script');
   });
   document.head.appendChild(script);
-  //alert('1 function');
 })();
 
 (function(send) {
@@ -127,8 +122,3 @@
 };
 })(XMLHttpRequest.prototype.send);
 
-$(document).ready(function () {
-	//document.getElementsByTagName("html")[0].style.visibility = "visible";
-	//$('.loader').hide();
-	//alert('2 ready')
-});
