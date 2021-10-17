@@ -95,8 +95,9 @@
     $('.loader').hide();
     
     function recursive() {
+    	console.log("Recursing. "+$('#notebook_list .list_item').length);
       setTimeout(function(){
-       if ($('#notebook_list .list_item').length){
+       if($('#notebook_list .list_item').length){
       	 $('html').css('visibility', 'visible');
        }
        else{
@@ -104,6 +105,7 @@
        }
       }, 100)
     }
+    recursive();
     //alert('3 script');
   });
   document.head.appendChild(script);
