@@ -92,11 +92,11 @@
     console.log(`jQuery ${$.fn.jquery} has been loaded successfully!`);
     // use jQuery below
     function recursive() {
-    	console.log("Recursing. "+$('#notebook_list .list_item').length);
+      console.log("Recursing. "+$('#notebook_list .list_item').length);
       setTimeout(function(){
-       if($('#notebook_list .list_item').length){
-      	 $('#site').css('visibility', 'visible');
-      	  $('.loader').hide();
+       if(!$('#notebook_list').length || $('#notebook_list .list_item').length){
+         $('#site').css('visibility', 'visible');
+         $('.loader').hide();
        }
        else{
         recursive();
@@ -116,7 +116,6 @@
       }
     }, false);
     //var info="send data\r\n"+body;
-    //alert(info);
     $('.loader').show();
     send.call(this, body);
 };
