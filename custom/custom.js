@@ -80,7 +80,7 @@
   loaderDiv.classList.add('loader');
   loadingDiv.classList.add('loading');
   loaderDiv.appendChild(loadingDiv);
-  document.body.preChild(loaderDiv);
+  document.body.prependChild(loaderDiv);
 })();
 
 (function() {	
