@@ -80,7 +80,7 @@
   loaderDiv.classList.add('loader');
   loadingDiv.classList.add('loading');
   loaderDiv.appendChild(loadingDiv);
-  document.body.prependChild(loaderDiv);
+  document.body.appendChild(loaderDiv);
 })();
 
 (function() {	
@@ -98,7 +98,7 @@
     	console.log("Recursing. "+$('#notebook_list .list_item').length);
       setTimeout(function(){
        if($('#notebook_list .list_item').length){
-      	 $('html').css('visibility', 'visible');
+      	 $('#site').css('visibility', 'visible');
       	  $('.loader').hide();
        }
        else{
