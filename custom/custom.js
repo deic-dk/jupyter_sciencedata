@@ -92,13 +92,14 @@
     console.log(`jQuery ${$.fn.jquery} has been loaded successfully!`);
     // use jQuery below
     //$('#notebook_list').click(function(){$('.loader').show();});
-    $('.loader').hide();
+    //$('.loader').hide();
     
     function recursive() {
     	console.log("Recursing. "+$('#notebook_list .list_item').length);
       setTimeout(function(){
        if($('#notebook_list .list_item').length){
       	 $('html').css('visibility', 'visible');
+      	  $('.loader').hide();
        }
        else{
         recursive();
@@ -109,7 +110,6 @@
     //alert('3 script');
   });
   document.head.appendChild(script);
-  $('.loader').show();
   //alert('1 function');
 })();
 
