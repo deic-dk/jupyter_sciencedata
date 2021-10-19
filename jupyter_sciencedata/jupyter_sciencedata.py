@@ -166,7 +166,7 @@ class OpCheckpoints(GenericCheckpointsMixin, Checkpoints):
         def rename_checkpoint_async():
              return (yield _rename_checkpoint(self._context(), checkpoint_id, old_path, new_path))
 
-        return _run_sync_in_new_thread(_rename_checkpoint)
+        return _run_sync_in_new_thread(rename_checkpoint_async)
 
 #     @gen.coroutine
 #     def restore_checkpoint(self, checkpoint_id, path):
