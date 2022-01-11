@@ -73,7 +73,7 @@
  * @static
  */
 
-(function() {	
+(function() {
   // Append loading div to body
   var loaderDiv = document.createElement('div');
   var loadingDiv = document.createElement('div');
@@ -83,7 +83,7 @@
   document.body.appendChild(loaderDiv);
 })();
 
-(function() {	
+(function() {
   // Load the script
   const script = document.createElement("script");
   script.src = 'https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js';
@@ -121,3 +121,18 @@
 };
 })(XMLHttpRequest.prototype.send);
 
+// Disable autosave
+define([
+  'base/js/namespace',
+  'base/js/events'
+  ],
+  function(IPython, events) {
+    events.on("notebook_loaded.Notebook",
+        function () {
+                               IPython.notebook.set_autosave_interval(0);
+                              //in milliseconds
+                 }
+      );
+    //may include additional events.on() statements
+ }
+);
