@@ -96,6 +96,8 @@
       setTimeout(function(){
        if(!$('#notebook_list').length || $('#notebook_list .list_item').length){
          $('#site').css('visibility', 'visible');
+         $('a[href="#nbextensions_configurator"]').hide();
+         $('a[href="#clusters"]').hide();
          $('.loader').hide();
        }
        else{
@@ -112,6 +114,8 @@
   XMLHttpRequest.prototype.send = function(body) {
     this.addEventListener('readystatechange', function() {
       if (/*this.responseURL.includes('kube') && */this.readyState === 4) {
+        $('a[href="#nbextensions_configurator"]').hide();
+        $('a[href="#clusters"]').hide();
         $('.loader').hide();
       }
     }, false);
@@ -122,7 +126,6 @@
 })(XMLHttpRequest.prototype.send);
 
 (function() {
-$('a[href="#nbextensions_configurator"]').hide();
 // Disable autosave
 define([
   'base/js/namespace',
