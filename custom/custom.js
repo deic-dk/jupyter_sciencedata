@@ -125,6 +125,8 @@
 };
 })(XMLHttpRequest.prototype.send);
 
+// This should no longer be necessary - patched in image
+/*
 (function() {
 // Disable autosave
 define([
@@ -134,12 +136,14 @@ define([
   function(IPython, events) {
     events.on("notebook_loaded.Notebook",
       function () {
-        IPython.notebook.set_autosave_interval(0);
+        Jupyter.notebook.set_autosave_interval(0);
         //in milliseconds
         $("select.ui-widget-content").val(0);
+        $("select.ui-widget-content").find('option[value="2"]').text('2');
       }
     );
     //may include additional events.on() statements
   }
 );
 })();
+*/
