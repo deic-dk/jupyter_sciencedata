@@ -121,6 +121,7 @@
 };
 })(XMLHttpRequest.prototype.send);
 
+(function() {
 // Disable autosave
 define([
   'base/js/namespace',
@@ -128,11 +129,14 @@ define([
   ],
   function(IPython, events) {
     events.on("notebook_loaded.Notebook",
-        function () {
-                               IPython.notebook.set_autosave_interval(0);
-                              //in milliseconds
-                 }
-      );
+      function () {
+        IPython.notebook.set_autosave_interval(0);
+        //in milliseconds
+        $("select.ui-widget-content").val(0);
+        $('a[href="#nbextensions_configurator"]').hide();
+      }
+    );
     //may include additional events.on() statements
- }
+  }
 );
+})();
