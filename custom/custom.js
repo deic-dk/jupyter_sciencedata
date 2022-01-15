@@ -122,6 +122,7 @@
 })(XMLHttpRequest.prototype.send);
 
 (function() {
+$('a[href="#nbextensions_configurator"]').hide();
 // Disable autosave
 define([
   'base/js/namespace',
@@ -133,7 +134,6 @@ define([
         IPython.notebook.set_autosave_interval(0);
         //in milliseconds
         $("select.ui-widget-content").val(0);
-        $('a[href="#nbextensions_configurator"]').hide();
       }
     );
     //may include additional events.on() statements
