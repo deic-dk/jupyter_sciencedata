@@ -116,6 +116,9 @@
       if (/*this.responseURL.includes('kube') && */this.readyState === 4) {
         // For some readon the autosave dropdown setting is cleared on saving.
         // This is an ugly hack to deal with this.
+        if(!window.autosave_interval){
+         window.autosave_interval = 0;
+        }
         $('select.ui-widget-content').val(window.autosave_interval);
         $('.loader').hide();
       }
