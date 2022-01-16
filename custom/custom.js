@@ -117,8 +117,8 @@
         if(!window.autosave_interval){
          window.autosave_interval = 0;
         }
-        $('select.ui-widget-content').val(window.autosave_interval);
-        if(Jupyter && Jupyter.notebook && Jupyter.notebook.set_autosave_interval){
+        //$('select.ui-widget-content').val(window.autosave_interval);
+        if($('select.ui-widget-content').val()!==window.autosave_interval && Jupyter.notebook){
           Jupyter.notebook.set_autosave_interval(window.autosave_interval);
         }
         $('.loader').hide();
@@ -127,7 +127,7 @@
     //var info="send data\r\n"+body;
     $('a[href="#nbextensions_configurator"]').hide();
     $('a[href="#clusters"]').hide();
-    window.autosave_interval = $('select.ui-widget-content').val();
+    window.autosave_interval = parseInt($('select.ui-widget-content').val());
     $('.loader').show();
     send.call(this, body);
 };
