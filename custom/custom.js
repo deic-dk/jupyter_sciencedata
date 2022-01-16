@@ -120,6 +120,7 @@
          window.autosave_interval = 0;
         }
         $('select.ui-widget-content').val(window.autosave_interval);
+        Jupyter.notebook.set_autosave_interval(window.autosave_interval);
         $('.loader').hide();
       }
     }, false);
