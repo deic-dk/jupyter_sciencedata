@@ -96,8 +96,6 @@
       setTimeout(function(){
        if(!$('#notebook_list').length || $('#notebook_list .list_item').length){
          $('#site').css('visibility', 'visible');
-         $('a[href="#nbextensions_configurator"]').hide();
-         $('a[href="#clusters"]').hide();
          $('.loader').hide();
        }
        else{
@@ -123,11 +121,12 @@
         if(Jupyter && Jupyter.notebook && Jupyter.notebook.set_autosave_interval){
           Jupyter.notebook.set_autosave_interval(window.autosave_interval);
         }
-        
         $('.loader').hide();
       }
     }, false);
     //var info="send data\r\n"+body;
+    $('a[href="#nbextensions_configurator"]').hide();
+    $('a[href="#clusters"]').hide();
     window.autosave_interval = $('select.ui-widget-content').val();
     $('.loader').show();
     send.call(this, body);
