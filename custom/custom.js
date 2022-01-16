@@ -114,12 +114,14 @@
   XMLHttpRequest.prototype.send = function(body) {
     this.addEventListener('readystatechange', function() {
       if (/*this.responseURL.includes('kube') && */this.readyState === 4) {
-        $('a[href="#nbextensions_configurator"]').hide();
-        $('a[href="#clusters"]').hide();
+        // For some readon the autosave dropdown setting is cleared on saving.
+        // This is an ugly hack to deal with this.
+        $('select.ui-widget-content').val(window.autosave_interval);
         $('.loader').hide();
       }
     }, false);
     //var info="send data\r\n"+body;
+    window.autosave_interval = $('select.ui-widget-content').val();
     $('.loader').show();
     send.call(this, body);
 };
