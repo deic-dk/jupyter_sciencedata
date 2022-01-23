@@ -561,6 +561,9 @@ def _rename(context, old_path, new_path):
     #if (yield _exists(context, new_path)):
     #    raise HTTPServerError(400, "Target already exists")
 
+    if old_path == new_path :
+        return _saved_model(new_path, type, None, datetime.datetime.now())
+
     type = yield _type_from_path(context, old_path)
     # webdav_client returns nothing. We need headers
     #response = yield webdav_client.move(remote_path_from=old_path, remote_path_to=new_path)
