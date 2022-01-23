@@ -555,11 +555,11 @@ def _increment_filename(context, filename, path='', insert=''):
 
 @gen.coroutine
 def _rename(context, old_path, new_path):
-    if (not (yield _exists(context, old_path))):
-        raise HTTPServerError(400, "Source does not exist")
+    #if (not (yield _exists(context, old_path))):
+    #    raise HTTPServerError(400, "Source does not exist")
 
-    if (yield _exists(context, new_path)):
-        raise HTTPServerError(400, "Target already exists")
+    #if (yield _exists(context, new_path)):
+    #    raise HTTPServerError(400, "Target already exists")
 
     type = yield _type_from_path(context, old_path)
     # webdav_client returns nothing. We need headers
@@ -666,7 +666,10 @@ def _make_sciencedata_http_request(context, method, path, query, payload, header
         response = (yield AsyncHTTPClient().fetch(request))
         #IOLoop.current().start()
     except HTTPClientError as exception:
-        if exception.response.code != 404:
+        if not hasattr(exception.response, 'code'):
+            context.logger.warning('No response')
+            raise HTTPServerError(0, 'Error accessing '+url)
+        elif exception.response.code != 404:
             context.logger.warning(exception.response.body)
         raise HTTPServerError(exception.response.code, 'Error accessing '+url)
 
