@@ -262,8 +262,8 @@ def _list_checkpoints(context, path):
 
 class JupyterScienceData(ContentsManager):
 
-    #checkpoints_class = OpCheckpoints
-    checkpoints_class = NoOpCheckpoints
+    checkpoints_class = OpCheckpoints
+    #checkpoints_class = NoOpCheckpoints
 
     multipart_uploads = Instance(ExpiringDict)
 
