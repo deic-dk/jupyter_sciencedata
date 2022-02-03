@@ -438,10 +438,11 @@ def fix_json(json):
         return
     if json['worksheets']:
         for worksheet in json['worksheets']:
-            fix_json_cells(worksheet)
+            worksheet = fix_json_cells(worksheet)
     elif json['cells']:
-        fix_json_cells(json)
+        json = fix_json_cells(json)
     json['fixed'] = True
+    return json
 
 def fix_json_cells(j):
     if not j['cells']:
@@ -455,6 +456,7 @@ def fix_json_cells(j):
             for k in range(len(cell['outputs'])):
                 if 'text' in cell['outputs'][k] and type(cell['outputs'][k]['text']) == list:
                     cell['outputs'][k]['text'] = "\n".join([l.strip() for l in cell['outputs'][k]['text']])
+    return j
 
 @gen.coroutine
 def _get_notebook(context, path, content):
@@ -462,8 +464,8 @@ def _get_notebook(context, path, content):
     ret = nbformat.from_dict(notebook_dict)
     try:
         fix_json(ret)
-    except:
-        context.logger.warning('Notebook fixing falied')
+    except Exception as e:
+        context.logger.error('Notebook fixing failed, %s', traceback.format_exc())
     return ret
 
 @gen.coroutine
