@@ -431,10 +431,37 @@ def _get(context, path, content, type, format):
     format_to_get = format if format is not None else _format_from_type_and_path(context, type_to_get, path)
     return (yield GETTERS[(type_to_get, format_to_get)](context, path, content))
 
+# function that changes lists to strings
+# FO: fix - don't strip source - indents matter
+def fix_json(json):
+    if json['fixed']:
+        return
+    if json['worksheets']:
+        for worksheet in json['worksheets']:
+            fix_json_cells(worksheet)
+    elif json['cells']
+        fix_json_cells(json)
+    json['fixed'] = True
+
+def fix_json_cells(j):
+    if not j['cells']:
+        return
+    for cell in j['cells']:
+        if 'text' in cell and type(cell['text']) == list:
+            cell['text'] = "".join([l.strip() for l in cell['text']])
+        elif 'source' in cell and type(cell['source']) == list:
+            cell['source'] = "".join([l for l in cell['source']])
+        if 'outputs' in cell:
+            for k in range(len(cell['outputs'])):
+                if 'text' in cell['outputs'][k] and type(cell['outputs'][k]['text']) == list:
+                    cell['outputs'][k]['text'] = "\n".join([l.strip() for l in cell['outputs'][k]['text']])
+
 @gen.coroutine
 def _get_notebook(context, path, content):
     notebook_dict = yield _get_any(context, path, content, 'notebook', None, 'json', lambda file_bytes: json.loads(file_bytes.decode('utf-8')))
-    return nbformat.from_dict(notebook_dict)
+    ret = nbformat.from_dict(notebook_dict)
+    fix_json(ret)
+    return ret
 
 @gen.coroutine
 def _get_file_base64(context, path, content):
@@ -461,7 +488,7 @@ def _get_any(context, path, content, type, mimetype, format, decode):
         'created': last_modified,
         'format': format if content else None,  
         'content': decode(file_bytes) if content else None,
-    }  
+    }
 
 
 @gen.coroutine
