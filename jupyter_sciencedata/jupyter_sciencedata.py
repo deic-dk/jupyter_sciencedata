@@ -460,7 +460,10 @@ def fix_json_cells(j):
 def _get_notebook(context, path, content):
     notebook_dict = yield _get_any(context, path, content, 'notebook', None, 'json', lambda file_bytes: json.loads(file_bytes.decode('utf-8')))
     ret = nbformat.from_dict(notebook_dict)
-    fix_json(ret)
+    try:
+        fix_json(ret)
+    except:
+        context.logger.warning('Notebook fixing falied')
     return ret
 
 @gen.coroutine
