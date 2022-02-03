@@ -439,7 +439,7 @@ def fix_json(json):
     if json['worksheets']:
         for worksheet in json['worksheets']:
             fix_json_cells(worksheet)
-    elif json['cells']
+    elif json['cells']:
         fix_json_cells(json)
     json['fixed'] = True
 
