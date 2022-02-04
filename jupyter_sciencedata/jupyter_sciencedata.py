@@ -444,7 +444,8 @@ def fix_json(json):
     json['fixed'] = True
 
 def fix_json_cells(j):
-    if not j['cells']:
+    context.logger.warn('Fixing notebook: ' + json.dumps(j))
+    if not 'cells' in j:
         return
     for cell in j['cells']:
         if 'text' in cell and type(cell['text']) == list:
@@ -463,7 +464,7 @@ def _get_notebook(context, path, content):
     try:
         fix_json(ret)
     except Exception as e:
-        context.logger.error('Notebook fixing failed, %s', traceback.format_exc())
+        context.logger.error('Notebook fixing failed: ' + traceback.format_exc())
     return ret
 
 @gen.coroutine
