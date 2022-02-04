@@ -462,10 +462,10 @@ def fix_json_cells(j):
 def _get_notebook(context, path, content):
     notebook_dict = yield _get_any(context, path, content, 'notebook', None, 'json', lambda file_bytes: json.loads(file_bytes.decode('utf-8')))
     ret = nbformat.from_dict(notebook_dict)
-    try:
-        fix_json(ret)
-    except Exception as e:
-        context.logger.error('Notebook fixing failed, %s', traceback.format_exc())
+    #try:
+    #    fix_json(ret)
+    #except Exception as e:
+    #    context.logger.error('Notebook fixing failed, %s', traceback.format_exc())
     return ret
 
 @gen.coroutine
