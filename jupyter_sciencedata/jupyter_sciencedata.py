@@ -434,19 +434,18 @@ def _get(context, path, content, type, format):
 # function that changes lists to strings
 # FO: fix - don't strip source - indents matter
 def fix_json(json):
-    if json['fixed']:
-        return json
-    if json['worksheets']:
+    if 'fixed' in json:
+        return
+    if 'worksheets' in json:
         for worksheet in json['worksheets']:
-            worksheet = fix_json_cells(worksheet)
-    elif json['cells']:
-        json = fix_json_cells(json)
+            fix_json_cells(worksheet)
+    elif 'cells' in json:
+        fix_json_cells(json)
     json['fixed'] = True
-    return json
 
 def fix_json_cells(j):
     if not j['cells']:
-        return j
+        return
     for cell in j['cells']:
         if 'text' in cell and type(cell['text']) == list:
             cell['text'] = "".join([l.strip() for l in cell['text']])
@@ -456,16 +455,15 @@ def fix_json_cells(j):
             for k in range(len(cell['outputs'])):
                 if 'text' in cell['outputs'][k] and type(cell['outputs'][k]['text']) == list:
                     cell['outputs'][k]['text'] = "\n".join([l.strip() for l in cell['outputs'][k]['text']])
-    return j
 
 @gen.coroutine
 def _get_notebook(context, path, content):
     notebook_dict = yield _get_any(context, path, content, 'notebook', None, 'json', lambda file_bytes: json.loads(file_bytes.decode('utf-8')))
     ret = nbformat.from_dict(notebook_dict)
-    #try:
-    #    fix_json(ret)
-    #except Exception as e:
-    #    context.logger.error('Notebook fixing failed, %s', traceback.format_exc())
+    try:
+        fix_json(ret)
+    except Exception as e:
+        context.logger.error('Notebook fixing failed, %s', traceback.format_exc())
     return ret
 
 @gen.coroutine
