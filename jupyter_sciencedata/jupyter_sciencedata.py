@@ -435,7 +435,7 @@ def _get(context, path, content, type, format):
 # FO: fix - don't strip source - indents matter
 def fix_json(json):
     if json['fixed']:
-        return
+        return json
     if json['worksheets']:
         for worksheet in json['worksheets']:
             worksheet = fix_json_cells(worksheet)
@@ -446,7 +446,7 @@ def fix_json(json):
 
 def fix_json_cells(j):
     if not j['cells']:
-        return
+        return j
     for cell in j['cells']:
         if 'text' in cell and type(cell['text']) == list:
             cell['text'] = "".join([l.strip() for l in cell['text']])
