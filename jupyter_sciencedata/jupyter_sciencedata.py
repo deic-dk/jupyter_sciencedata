@@ -64,17 +64,22 @@ CheckpointContext = namedtuple('Context', [
     'logger'
 ])
 
-SCIENCEDATA_HEADERS = {};
-SCIENCEDATA_PREFIX = "/files/";
-SCIENCEDATA_HOST = "sciencedata";
+SCIENCEDATA_HEADERS = {}
+SCIENCEDATA_PREFIX = "/files/"
+if 'HOME_SERVER_HOSTNAME' in os.environ:
+    SCIENCEDATA_HOST = os.environ['HOME_SERVER_HOSTNAME']
+else:
+    SCIENCEDATA_HOST = "sciencedata"
 
 webdav_options = {
  'webdav_hostname': "https://" + SCIENCEDATA_HOST + SCIENCEDATA_PREFIX,
  'webdav_login': '',
  'webdav_password': '',
- 'verify': False
 }
 webdav_client = Client(webdav_options)
+# If https cannot be used, then webdav_client.verify must be false.
+# It used to be possible to set this in webdav_options, but that was discontinued.
+#webdav_client.verify = False
 
 # As far as I can see from
 # https://github.com/ezhov-evgeny/webdav-client-python-3/blob/871ea5f9b862553465551dd79dd5b6b298e3ff17/webdav3/client.py
