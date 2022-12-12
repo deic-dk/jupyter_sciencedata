@@ -65,7 +65,7 @@ CheckpointContext = namedtuple('Context', [
 ])
 
 SCIENCEDATA_HEADERS = {}
-SCIENCEDATA_PREFIX = "/files/"
+SCIENCEDATA_PREFIX = "/files"
 if 'HOME_SERVER_HOSTNAME' in os.environ:
     SCIENCEDATA_HOST = os.environ['HOME_SERVER_HOSTNAME']
 else:
