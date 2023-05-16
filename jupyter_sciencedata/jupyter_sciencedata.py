@@ -28,8 +28,8 @@ from tornado.web import HTTPError as HTTPServerError
 
 AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient")
 
-from notebook.services.contents.checkpoints import Checkpoints, GenericCheckpointsMixin
-from notebook.services.contents.filecheckpoints import GenericFileCheckpoints
+from jupyter_server.services.contents.checkpoints import Checkpoints, GenericCheckpointsMixin
+from jupyter_server.services.contents.filecheckpoints import GenericFileCheckpoints
 
 from traitlets.config.configurable import Configurable
 from traitlets import (
@@ -43,7 +43,7 @@ from traitlets import (
 
 import nbformat
 from nbformat.v4 import new_notebook
-from notebook.services.contents.manager import (
+from jupyter_server.services.contents.manager import (
     ContentsManager,
 )
 
