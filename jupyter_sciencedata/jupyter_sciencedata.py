@@ -15,6 +15,8 @@ import threading
 import re
 import time
 import urllib
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
 
 from tornado import gen
 from tornado.httpclient import (
@@ -75,6 +77,8 @@ webdav_options = {
  'verify': False
 }
 webdav_client = Client(webdav_options)
+webdav_client.default_options['SSL_VERIFYPEER'] = False 
+webdav_client.default_options['SSL_VERIFYHOST'] = False
 
 # As far as I can see from
 # https://github.com/ezhov-evgeny/webdav-client-python-3/blob/871ea5f9b862553465551dd79dd5b6b298e3ff17/webdav3/client.py
