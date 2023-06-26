@@ -30,8 +30,8 @@ from tornado.web import HTTPError as HTTPServerError
 
 AsyncHTTPClient.configure("tornado.curl_httpclient.CurlAsyncHTTPClient")
 
-from notebook.services.contents.checkpoints import Checkpoints, GenericCheckpointsMixin
-from notebook.services.contents.filecheckpoints import GenericFileCheckpoints
+from jupyter_server.services.contents.checkpoints import Checkpoints, GenericCheckpointsMixin
+from jupyter_server.services.contents.filecheckpoints import GenericFileCheckpoints
 
 from traitlets.config.configurable import Configurable
 from traitlets import (
@@ -45,7 +45,7 @@ from traitlets import (
 
 import nbformat
 from nbformat.v4 import new_notebook
-from notebook.services.contents.manager import (
+from jupyter_server.services.contents.manager import (
     ContentsManager,
 )
 
@@ -268,6 +268,37 @@ class JupyterScienceData(ContentsManager):
 
     checkpoints_class = OpCheckpoints
     #checkpoints_class = NoOpCheckpoints
+
+    root_dir = Unicode("/", config=True)
+
+    preferred_dir = Unicode(
+        "",
+        config=True,
+        help=_i18n(
+            "Preferred starting directory to use for notebooks. This is an API path (`/` separated, relative to root dir)"
+        ),
+    )
+
+    @validate("preferred_dir")
+    def _validate_preferred_dir(self, proposal):
+        value = proposal["value"].strip("/")
+        try:
+            import inspect
+
+            if inspect.iscoroutinefunction(self.dir_exists):
+                dir_exists = run_sync(self.dir_exists)(value)
+            else:
+                dir_exists = self.dir_exists(value)
+        except HTTPError as e:
+            raise TraitError(e.log_message) from e
+        if not dir_exists:
+            raise TraitError(_i18n("Preferred directory not found: %r") % value)
+        try:
+            if value != self.parent.preferred_dir:
+                self.parent.preferred_dir = os.path.join(self.root_dir, *value.split("/"))
+        except (AttributeError, TraitError):
+            pass
+        return value
 
     multipart_uploads = Instance(ExpiringDict)
 
