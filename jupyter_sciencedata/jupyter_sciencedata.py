@@ -39,6 +39,7 @@ from traitlets import (
     Unicode,
     Instance,
     TraitType,
+    TraitError,
     Type,
     default,
 )
@@ -51,6 +52,9 @@ from jupyter_server.services.contents.manager import (
 
 from webdav3.client import Client
 from webdav3.exceptions import RemoteResourceNotFound
+
+from jupyter_server.transutils import _i18n
+from jupyter_client.utils import run_sync
 
 NOTEBOOK_SUFFIX = '.ipynb'
 CHECKPOINT_SUFFIX = '.checkpoints'
@@ -289,7 +293,7 @@ class JupyterScienceData(ContentsManager):
                 dir_exists = run_sync(self.dir_exists)(value)
             else:
                 dir_exists = self.dir_exists(value)
-        except HTTPError as e:
+        except HTTPServerError as e:
             raise TraitError(e.log_message) from e
         if not dir_exists:
             raise TraitError(_i18n("Preferred directory not found: %r") % value)
