@@ -42,6 +42,7 @@ from traitlets import (
     TraitError,
     Type,
     default,
+    validate,
 )
 
 import nbformat
