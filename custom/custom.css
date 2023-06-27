@@ -43,6 +43,6 @@ body[class=""] #site {
 	}
 
 #header[role="navigation"] {
-	display:none;
+	display:none!important;
 }
 
