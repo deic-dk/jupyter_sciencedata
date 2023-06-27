@@ -106,6 +106,9 @@
     recursive();
   });
   document.head.appendChild(script);
+  // Don't show Jupyter 7 migration message
+  localStorage.setItem('showNbClassicNews', false);
+  newsId.style.display = 'none';
 })();
 
 (function(send) {

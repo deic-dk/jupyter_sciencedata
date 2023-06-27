@@ -38,5 +38,11 @@ This will always be an empty file
   }
 }
 
-body[class=""] #site { visibility:hidden; }
+body[class=""] #site {
+	visibility:hidden;
+	}
+
+#header[role="navigation"] {
+	display:none;
+}
 
