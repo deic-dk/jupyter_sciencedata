@@ -42,7 +42,7 @@ body[class=""] #site {
 	visibility:hidden;
 	}
 
-#header[role="navigation"], .clusters_tab_link {
+#header[role="navigation"], .nbextensions_configurator_tab_link, .clusters_tab_link {
 	display:none!important;
 }
 

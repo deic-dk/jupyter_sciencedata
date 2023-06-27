@@ -128,8 +128,9 @@
       }
     }, false);
     //var info="send data\r\n"+body;
-    $('a[href="#nbextensions_configurator"]').hide();
-    $('a[href="#clusters"]').hide();
+    $('a[href="#nbextensions_configurator"]').addClass('nbextensions_configurator_tab_link');
+    //$('a[href="#nbextensions_configurator"]').hide();
+   // $('a[href="#clusters"]').hide();
     window.autosave_interval = parseInt($('select.ui-widget-content').val());
     $('.loader').show();
     send.call(this, body);
