@@ -42,3 +42,7 @@ body[class=""] #site {
 	display:none!important;
 }
 
+a[href="#ipyclusters"] {
+	display: none;
+}
+
