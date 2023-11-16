@@ -1,48 +1,44 @@
-/*
-Placeholder for custom user CSS
-
-mainly to be overridden in profile/static/custom/custom.css
-
-This will always be an empty file
-*/
-
 * {
-  margin: 0;
-  padding: 0;
+	margin: 0;
+	padding: 0;
 }
 
 .loader {
-  top: 50%;
-  left: 50%;
-  position: absolute;
-  transform: translate(-50%, -50%);
+	top: 50%;
+	left: 50%;
+	position: absolute;
+	transform: translate(-50%, -50%);
 }
 
 .loading {
-  border: 2px solid #ccc;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  border-top-color: #296eaa8c;
-  border-left-color: #296eaa99;
-  animation: spin 1s infinite ease-in;
+	border: 2px solid #ccc;
+	width: 60px;
+	height: 60px;
+	border-radius: 50%;
+	border-top-color: #296eaa8c;
+	border-left-color: #296eaa99;
+	animation: spin 1s infinite ease-in;
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
+	0% {
+		transform: rotate(0deg);
+	}
 
-  100% {
-    transform: rotate(360deg);
-  }
+	100% {
+		transform: rotate(360deg);
+	}
 }
 
 body[class=""] #site {
 	visibility:hidden;
 	}
 
-#header[role="navigation"], .nbextensions_configurator_tab_link, .clusters_tab_link {
+#header[role="navigation"] #header-container {
+  display: none!important;
+}
+
+.nbextensions_configurator_tab_link, .clusters_tab_link {
 	display:none!important;
 }
 
