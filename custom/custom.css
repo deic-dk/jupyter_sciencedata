@@ -43,6 +43,6 @@ body[class=""] #site {
 }
 
 a[href="#ipyclusters"] {
-	display: none;
+	display: none!important;
 }
 
