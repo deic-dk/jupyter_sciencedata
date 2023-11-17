@@ -42,7 +42,7 @@ body[class=""] #site {
 	display:none!important;
 }
 
-a[href="#ipyclusters"], a[href="/nbexternsions/"] {
+a[href="#ipyclusters"], a[href="/nbextensions/"] {
 	display: none!important;
 }
 
