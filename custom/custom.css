@@ -46,3 +46,7 @@ a[href="#ipyclusters"], a[href="/nbextensions/"] {
 	display: none!important;
 }
 
+#toggle_header {
+	display: none;
+}
+
