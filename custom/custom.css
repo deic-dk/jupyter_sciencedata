@@ -34,7 +34,7 @@ body[class=""] #site {
 	visibility:hidden;
 	}
 
-#header[role="navigation"] #header-container {
+#header[role="navigation"] #header-container span#shutdown {
   display: none!important;
 }
 
