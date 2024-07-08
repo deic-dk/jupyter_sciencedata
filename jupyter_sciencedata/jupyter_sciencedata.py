@@ -337,7 +337,7 @@ class JupyterScienceData(ContentsManager):
 
         return _run_sync_in_new_thread(file_exists_async)
 
-    def get(self, path, content=True, type=None, format=None, require_hash=False):
+    def get(self, path, content=True, type=None, format=None, hash=False):
 
         @gen.coroutine
         def get_async():
