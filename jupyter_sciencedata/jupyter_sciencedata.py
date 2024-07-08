@@ -87,6 +87,7 @@ webdav_options = {
 webdav_client = Client(webdav_options)
 webdav_client.default_options['SSL_VERIFYPEER'] = False 
 webdav_client.default_options['SSL_VERIFYHOST'] = False
+webdav_client.verify = False
 
 # As far as I can see from
 # https://github.com/ezhov-evgeny/webdav-client-python-3/blob/871ea5f9b862553465551dd79dd5b6b298e3ff17/webdav3/client.py
