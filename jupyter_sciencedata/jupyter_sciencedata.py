@@ -16,7 +16,6 @@ import re
 import time
 import urllib
 import ssl
-import traceback
 ssl._create_default_https_context = ssl._create_unverified_context
 
 from tornado import gen
@@ -462,7 +461,10 @@ def _get_etag(context, path):
             return ''
         response = yield _make_sciencedata_http_request(context, 'HEAD', path, {}, b'', {})
         etag = response.headers['ETag'] if ('ETag' in response.headers) else ''
-        context.logger.info('ETag: '+etag)
+        if etag:
+            context.logger.info('ETag: '+etag)
+        else:
+            context.logger.info('Headers: '+':'.join(response.headers))
         return etag
 
     return _run_sync_in_new_thread(_get_etag_async)
@@ -510,7 +512,7 @@ def _get_notebook(context, path, content):
     try:
         fix_json(notebook_dict['content'])
     except Exception as e:
-        context.logger.error('Notebook fixing failed, '+str(e)+' : '+traceback.format_exc())
+        context.logger.error('Notebook fixing failed, '+str(e))
     notebook_dict['mimetype'] = 'application/x-ipynb+json'
     ret = nbformat.from_dict(notebook_dict)
     return ret
@@ -532,10 +534,6 @@ def _get_any(context, path, content, type, mimetype, format, decode):
     file_bytes = response.body
     last_modified_str = response.headers['Last-Modified']
     last_modified = datetime.datetime.strptime(last_modified_str, "%a, %d %b %Y %H:%M:%S GMT")
-    # https://stackoverflow.com/questions/51359943/generate-md5-hash-of-json-and-compare-in-python-and-javascript
-    #json_string = json.dumps(notebook_dict['content'], sort_keys=True, indent=2)
-    #json_string = json.dumps(notebook_dict['content'])
-
     return {
         'name': _final_path_component(path),
         'path': path,
