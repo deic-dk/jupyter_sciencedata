@@ -16,6 +16,7 @@ import re
 import time
 import urllib
 import ssl
+import traceback
 ssl._create_default_https_context = ssl._create_unverified_context
 
 from tornado import gen
@@ -43,6 +44,7 @@ from traitlets import (
     Type,
     default,
     validate,
+    HasTraits,
 )
 
 import nbformat
@@ -72,10 +74,10 @@ CheckpointContext = namedtuple('Context', [
 ])
 
 SCIENCEDATA_HEADERS = {};
-SCIENCEDATA_PREFIX = "/files/";
+SCIENCEDATA_PREFIX = "/files";
 server_root = os.getenv('JUPYTER_SERVER_ROOT')
 if server_root != None:
-    SCIENCEDATA_PREFIX = SCIENCEDATA_PREFIX + server_root.strip("/") + "/"
+    SCIENCEDATA_PREFIX = SCIENCEDATA_PREFIX + server_root.strip("/")
 SCIENCEDATA_HOST = "sciencedata";
 
 webdav_options = {
@@ -273,7 +275,7 @@ def _list_checkpoints(context, path):
         for file in files
     ]
 
-class JupyterScienceData(ContentsManager):
+class JupyterScienceData(ContentsManager, HasTraits):
 
     checkpoints_class = OpCheckpoints
     #checkpoints_class = NoOpCheckpoints
@@ -337,7 +339,7 @@ class JupyterScienceData(ContentsManager):
 
         return _run_sync_in_new_thread(file_exists_async)
 
-    def get(self, path, content=True, type=None, format=None, hash=False):
+    def get(self, path, content=True, type=None, format=None, require_hash=True):
 
         @gen.coroutine
         def get_async():
@@ -475,38 +477,41 @@ def _get(context, path, content, type, format):
     format_to_get = format if format is not None else _format_from_type_and_path(context, type_to_get, path)
     return (yield GETTERS[(type_to_get, format_to_get)](context, path, content))
 
+# Backwards compatibility
 # function that changes lists to strings
 # FO: fix - don't strip source - indents matter
-def fix_json(json):
-    if 'fixed' in json:
+def fix_json(myjson):
+    if myjson is None or 'fixed' in myjson:
         return
-    if 'worksheets' in json:
-        for worksheet in json['worksheets']:
+    if 'worksheets' in myjson and not myjson['worksheets'] is None:
+        for worksheet in myjson['worksheets']:
             fix_json_cells(worksheet)
-    elif 'cells' in json:
-        fix_json_cells(json)
-    json['fixed'] = True
+    elif 'cells' in myjson:
+        fix_json_cells(myjson)
+    myjson['fixed'] = True
 
 def fix_json_cells(j):
-    if not 'cells' in j:
+    if not 'cells' in j or j['cells'] is None:
         return
     for cell in j['cells']:
         if 'text' in cell and type(cell['text']) == list:
             cell['text'] = "".join([l.strip() for l in cell['text']])
         elif 'source' in cell and type(cell['source']) == list:
             cell['source'] = "".join([l for l in cell['source']])
-        if 'outputs' in cell:
+        if 'outputs' in cell and not cell['outputs'] is None:
             for k in range(len(cell['outputs'])):
                 if 'text' in cell['outputs'][k] and type(cell['outputs'][k]['text']) == list:
                     cell['outputs'][k]['text'] = "\n".join([l.strip() for l in cell['outputs'][k]['text']])
 
 @gen.coroutine
 def _get_notebook(context, path, content):
+    # context, path, content, type, mimetype, format, decode
     notebook_dict = yield _get_any(context, path, content, 'notebook', None, 'json', lambda file_bytes: json.loads(file_bytes.decode('utf-8')))
     try:
         fix_json(notebook_dict['content'])
     except Exception as e:
-        context.logger.error('Notebook fixing failed, '+str(e))
+        context.logger.error('Notebook fixing failed, '+str(e)+' : '+traceback.format_exc())
+    notebook_dict['mimetype'] = 'application/x-ipynb+json'
     ret = nbformat.from_dict(notebook_dict)
     return ret
 
@@ -520,11 +525,17 @@ def _get_file_text(context, path, content):
 
 @gen.coroutine
 def _get_any(context, path, content, type, mimetype, format, decode):
-    method = 'GET' if content else 'HEAD'
+    #method = 'GET' if content else 'HEAD'
+    # We need to get the body, even for content=0 requests, as these serve to check if a file has changed and need the md5 hash
+    method = 'GET'
     response = yield _make_sciencedata_http_request(context, method, path, {}, b'', {})
     file_bytes = response.body
     last_modified_str = response.headers['Last-Modified']
     last_modified = datetime.datetime.strptime(last_modified_str, "%a, %d %b %Y %H:%M:%S GMT")
+    # https://stackoverflow.com/questions/51359943/generate-md5-hash-of-json-and-compare-in-python-and-javascript
+    #json_string = json.dumps(notebook_dict['content'], sort_keys=True, indent=2)
+    #json_string = json.dumps(notebook_dict['content'])
+
     return {
         'name': _final_path_component(path),
         'path': path,
@@ -535,6 +546,8 @@ def _get_any(context, path, content, type, mimetype, format, decode):
         'created': last_modified,
         'format': format if content else None,  
         'content': decode(file_bytes) if content else None,
+        'hash_algorithm': 'md5',
+        'hash': hashlib.md5(file_bytes).hexdigest()
     }
 
 
