@@ -11,6 +11,7 @@ import itertools
 import json
 import mimetypes
 import os
+import os.path
 import threading
 import re
 import time
@@ -73,14 +74,15 @@ CheckpointContext = namedtuple('Context', [
 ])
 
 SCIENCEDATA_HEADERS = {};
-SCIENCEDATA_PREFIX = "/files";
+SCIENCEDATA_PREFIX = "/files/";
 server_root = os.getenv('JUPYTER_SERVER_ROOT')
 if server_root != None:
-    SCIENCEDATA_PREFIX = SCIENCEDATA_PREFIX + "/" + server_root.strip("/")
+    SCIENCEDATA_PREFIX = SCIENCEDATA_PREFIX + server_root.strip("/")
+    SCIENCEDATA_PREFIX = os.path.normpath(SCIENCEDATA_PREFIX)
 SCIENCEDATA_HOST = "sciencedata";
 
 webdav_options = {
- 'webdav_hostname': "https://" + SCIENCEDATA_HOST + SCIENCEDATA_PREFIX,
+ 'webdav_hostname': "https://" + os.path.normpath(SCIENCEDATA_HOST + SCIENCEDATA_PREFIX),
  'webdav_login': '',
  'webdav_password': '',
  'verify': False
@@ -673,7 +675,7 @@ def _rename(context, old_path, new_path):
 
     # webdav_client returns nothing. We need headers
     #response = yield webdav_client.move(remote_path_from=old_path, remote_path_to=new_path)
-    encoded_new_path = urllib.parse.quote(SCIENCEDATA_PREFIX+new_path, safe='/~')
+    encoded_new_path = urllib.parse.quote(os.path.normpath(SCIENCEDATA_PREFIX+new_path), safe='/~')
     new_url = f'https://{SCIENCEDATA_HOST}{encoded_new_path}'
     response = yield _make_sciencedata_http_request(context, 'MOVE', old_path, {}, b'', {'Destination':new_url})
     last_modified_str = response.headers['Date']
@@ -762,7 +764,7 @@ def _copy(context, from_path, to_path):
 def _make_sciencedata_http_request(context, method, path, query, payload, headers):
     all_headers = {**SCIENCEDATA_HEADERS, **headers}
     querystring = urllib.parse.urlencode(query, safe='~', quote_via=urllib.parse.quote)
-    encoded_path = urllib.parse.quote(SCIENCEDATA_PREFIX+path, safe='/~')
+    encoded_path = urllib.parse.quote(os.path.normpath(SCIENCEDATA_PREFIX+path), safe='/~')
     url = f'https://{SCIENCEDATA_HOST}{encoded_path}' + (('?' + querystring) if querystring else '')
 
     body = \
