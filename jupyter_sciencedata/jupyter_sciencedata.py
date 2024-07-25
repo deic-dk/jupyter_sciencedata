@@ -76,7 +76,7 @@ SCIENCEDATA_HEADERS = {};
 SCIENCEDATA_PREFIX = "/files";
 server_root = os.getenv('JUPYTER_SERVER_ROOT')
 if server_root != None:
-    SCIENCEDATA_PREFIX = SCIENCEDATA_PREFIX + server_root.strip("/")
+    SCIENCEDATA_PREFIX = SCIENCEDATA_PREFIX + "/" + server_root.strip("/")
 SCIENCEDATA_HOST = "sciencedata";
 
 webdav_options = {
