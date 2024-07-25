@@ -291,6 +291,11 @@ class JupyterScienceData(ContentsManager, HasTraits):
         ),
     )
 
+    # See https://github.com/jupyter-server/jupyter_server/issues/1313
+    @default('files_handler_params')
+    def _files_handler_params_default(self):
+        return {'path': self.root_dir}
+
     @validate("preferred_dir")
     def _validate_preferred_dir(self, proposal):
         value = proposal["value"].strip("/")
