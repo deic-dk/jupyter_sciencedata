@@ -106,10 +106,23 @@
     recursive();
   });
   document.head.appendChild(script);
+  
+  // Also load jquery-ui - needed by widgets 
+  const script1 = document.createElement("script");
+  script1.src = 'https://ajax.googleapis.com/ajax/libs/jqueryui/1.13.1/jquery-ui.min.js';
+  script1.type = 'text/javascript';
+  document.head.appendChild(script1);
+
+  // Also load jquery.tablesorter for varInspector. The loading with reuirejs does not seem to work...
+  const script2 = document.createElement("script");
+  script2.src = 'nbextensions/varInspector/jquery.tablesorter.min';
+  script2.type = 'text/javascript';
+  document.head.appendChild(script2);
+  
   // Don't show Jupyter 7 migration message
   localStorage.setItem('showNbClassicNews', false);
   newsId.style.display = 'none';
-})();
+  })();
 
 (function(send) {
   XMLHttpRequest.prototype.send = function(body) {
