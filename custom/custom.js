@@ -107,11 +107,12 @@
   });
   document.head.appendChild(script);
   
-  // Also load jquery-ui - needed by widgets 
-  const script1 = document.createElement("script");
+  // Also load jquery-ui - needed by widgets - nope - causes requirejs to 'blow up'...
+  // https://stackoverflow.com/questions/15371918/mismatched-anonymous-define-module
+  /*const script1 = document.createElement("script");
   script1.src = 'https://ajax.googleapis.com/ajax/libs/jqueryui/1.13.1/jquery-ui.min.js';
   script1.type = 'text/javascript';
-  document.head.appendChild(script1);
+  document.head.appendChild(script1);*/
 
   // Cache busting. w/o it, we get 'undefined' errors from nbextensions_configurator/tree_tab/main.js when require() gets a 304 response.
   require.config({
