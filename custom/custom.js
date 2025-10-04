@@ -113,12 +113,6 @@
   script1.type = 'text/javascript';
   document.head.appendChild(script1);
 
-  // Also load jquery.tablesorter for varInspector. The loading with reuirejs does not seem to work...
-  const script2 = document.createElement("script");
-  script2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.32.0/js/jquery.tablesorter.min.js';
-  script2.type = 'text/javascript';
-  document.head.appendChild(script2);
-  
   // Cache busting. w/o it, we get 'undefined' errors from nbextensions_configurator/tree_tab/main.js when require() gets a 304 response.
   require.config({
     urlArgs: "bust=" + (new Date()).getTime()
