@@ -86,7 +86,8 @@
 (function() {
   // Load the script
   const script = document.createElement("script");
-  script.src = 'https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js';
+  // 3.6.0https://sciencedata.dk/shared/kubefiles_public
+  script.src = 'https://sciencedata.dk/public/kubefiles_public/jupyter/jquery.min.js';
   script.type = 'text/javascript';
   script.addEventListener('load', () => {
     console.log(`jQuery ${$.fn.jquery} has been loaded successfully!`);
@@ -121,7 +122,9 @@
   
   // Don't show Jupyter 7 migration message
   localStorage.setItem('showNbClassicNews', false);
-  newsId.style.display = 'none';
+  if(typeof newsId!=='undefined'){
+    newsId.style.display = 'none';
+  }
   })();
 
 (function(send) {
