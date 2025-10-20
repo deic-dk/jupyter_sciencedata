@@ -87,7 +87,7 @@
   // Load the script
   const script = document.createElement("script");
   // 3.6.0https://sciencedata.dk/shared/kubefiles_public
-  script.src = 'https://sciencedata.dk/public/kubefiles_public/jupyter/jquery.min.js';
+  script.src = 'https://sciencedata.dk/public/kubefiles_shared/jupyter/jquery.min.js';
   script.type = 'text/javascript';
   script.addEventListener('load', () => {
     console.log(`jQuery ${$.fn.jquery} has been loaded successfully!`);
