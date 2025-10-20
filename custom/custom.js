@@ -116,10 +116,9 @@
   document.head.appendChild(script1);*/
 
   // Cache busting. w/o it, we get 'undefined' errors from nbextensions_configurator/tree_tab/main.js when require() gets a 304 response.
-  // Do this in image instead...
-  /*require.config({
+  require.config({
     urlArgs: "bust=" + (new Date()).getTime()
-});*/
+});
   
   // Don't show Jupyter 7 migration message
   localStorage.setItem('showNbClassicNews', false);
