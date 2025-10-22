@@ -86,9 +86,10 @@
 (function() {
   // Load the script
   const script = document.createElement("script");
-  // 3.6.0https://sciencedata.dk/shared/kubefiles_public
+  // 3.6.0
+  script.src = 'https://sciencedata.dk/public/kubefiles_shared/jupyter/jquery.min.js';
   //script.src = 'https://sciencedata.dk/public/kubefiles_shared/jupyter/jquery-3.7.1.js';
-  script.src = 'https://sciencedata.dk/public/kubefiles_shared/jupyter/jquery-1.10.0.js';
+  //script.src = 'https://sciencedata.dk/public/kubefiles_shared/jupyter/jquery-1.10.0.js';
   script.type = 'text/javascript';
   script.addEventListener('load', () => {
     console.log(`jQuery ${$.fn.jquery} has been loaded successfully!`);
