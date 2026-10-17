@@ -802,6 +802,21 @@ def _run_sync_in_new_thread(func):
             result = IOLoop.current().run_sync(func)
         except BaseException as _exception:
             exception = _exception
+        finally:
+            # Every call runs on a fresh event loop, so the AsyncHTTPClient
+            # (one per loop) and the loop itself must be closed here, or each
+            # request leaks its curl handle, its socket (left in CLOSE-WAIT)
+            # and the loop's self-pipe. After ~1000 operations the server hit
+            # the open-files limit and answered every request with 500
+            # (load test, 2026-10-16).
+            try:
+                AsyncHTTPClient().close()
+            except Exception:
+                pass
+            try:
+                IOLoop.current().close(all_fds=True)
+            except Exception:
+                pass
 
     thread = threading.Thread(target=_func)
     thread.start()
