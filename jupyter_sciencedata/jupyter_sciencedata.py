@@ -80,9 +80,11 @@ if server_root != None:
     SCIENCEDATA_PREFIX = SCIENCEDATA_PREFIX + server_root.strip("/")
     SCIENCEDATA_PREFIX = os.path.normpath(SCIENCEDATA_PREFIX)
 SCIENCEDATA_HOST = "sciencedata";
+# https towards the real silos; run_pod sets HOME_SERVER_PROTOCOL=http for the test silos (plain-http pods)
+SCIENCEDATA_PROTOCOL = os.getenv('HOME_SERVER_PROTOCOL', 'https').strip().lower() or 'https'
 
 webdav_options = {
- 'webdav_hostname': "https://" + os.path.normpath(SCIENCEDATA_HOST + SCIENCEDATA_PREFIX),
+ 'webdav_hostname': SCIENCEDATA_PROTOCOL + "://" + os.path.normpath(SCIENCEDATA_HOST + SCIENCEDATA_PREFIX),
  'webdav_login': '',
  'webdav_password': '',
  'verify': False
@@ -681,7 +683,7 @@ def _rename(context, old_path, new_path):
     # webdav_client returns nothing. We need headers
     #response = yield webdav_client.move(remote_path_from=old_path, remote_path_to=new_path)
     encoded_new_path = urllib.parse.quote(os.path.normpath(SCIENCEDATA_PREFIX+new_path), safe='/~')
-    new_url = f'https://{SCIENCEDATA_HOST}{encoded_new_path}'
+    new_url = f'{SCIENCEDATA_PROTOCOL}://{SCIENCEDATA_HOST}{encoded_new_path}'
     response = yield _make_sciencedata_http_request(context, 'MOVE', old_path, {}, b'', {'Destination':new_url})
     last_modified_str = response.headers['Date']
     last_modified = datetime.datetime.strptime(last_modified_str, "%a, %d %b %Y %H:%M:%S GMT")
@@ -770,7 +772,7 @@ def _make_sciencedata_http_request(context, method, path, query, payload, header
     all_headers = {**SCIENCEDATA_HEADERS, **headers}
     querystring = urllib.parse.urlencode(query, safe='~', quote_via=urllib.parse.quote)
     encoded_path = urllib.parse.quote(os.path.normpath(SCIENCEDATA_PREFIX+path), safe='/~')
-    url = f'https://{SCIENCEDATA_HOST}{encoded_path}' + (('?' + querystring) if querystring else '')
+    url = f'{SCIENCEDATA_PROTOCOL}://{SCIENCEDATA_HOST}{encoded_path}' + (('?' + querystring) if querystring else '')
 
     body = \
         payload if method == 'PUT' else \
